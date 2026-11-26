@@ -8,6 +8,18 @@ import { seedAppData } from "./seed/defaults";
 
 const STORAGE_KEY = "rolly-around-studios/v1";
 
+// Detect whether localStorage actually persists (it can be blocked on file://).
+export function storageWorks(): boolean {
+  try {
+    const k = "__rolly_test__";
+    localStorage.setItem(k, "1");
+    localStorage.removeItem(k);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function load(): AppData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
