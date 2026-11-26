@@ -4,17 +4,27 @@ Your private planner & content assistant for **@rollyaround** — travel, food &
 
 > **Cost:** The app, this repo, GitHub Pages hosting, and the rule-based assistant are **free**. The optional real-AI brain uses your own OpenAI/Anthropic key (pay-as-you-go, a few $/month). Flip it off and the free rule-based engine still runs everything.
 
-## What's built (Phase 1)
+## What's built
+
+All 10 tabs are working, plus Brand Deals (hidden until enabled) and Settings.
 
 - **Rolly's own design** — white + warm neutrals, subtle per-series accents, readable status badges, horizontal tabs, mobile + laptop friendly.
-- **Today / Morning Brief** — rule-based brief (one thing first + why, what to clear next, this week's pieces, due/coming up, overdue money), Plan/Film/Edit/Post checklists, Waiting-on-you.
-- **Record daily update** — speak (where the browser supports it) / type / paste → rule-based extraction of ideas, hooks, finished tasks, blockers, time → **proposed-changes diff** → save with **Undo**.
-- **Ideas** — your real idea bank (~90 cards) across your 3 series + Standalone, searchable by series/destination/status, quick capture with suggested title/series/payoff/angle/next step/verdict, status badges, Mark edit ready (instant green badge), Log published.
-- **Data survives refresh** (stored in this browser) + **Export / Import backup** so your data is always portable.
+- **Today / Morning Brief** — rule-based brief (one thing first + why, what to clear next, this week's pieces, due/coming up, overdue money, weekly 3-originals progress), Plan/Film/Edit/Post checklists, Waiting-on-you. **Record daily update** (speak / type / paste → rule-based extraction → proposed-changes diff → save with Undo).
+- **Ideas** — your real idea bank (~90 cards), searchable by series/destination/status, quick capture with suggested title/series/payoff/angle/next step/verdict, instant Mark edit ready, Log published.
+- **Lineup** — rule-based priority proposals (quick win + guide + portfolio + backup), 10–20 min quick action, weekly Plan/Film/Edit/Post timeline colour-coded by series, weekends free, weekday cap of 2, conflict flags, Needs-a-plan.
+- **Money** — earned / paid this month / pending / overdue / due-in-30, cash-flow by month, overdue chasers with draft follow-up + mark paid. Demo invoices excluded.
+- **Rates** — editable SGD rate card, package total, copy quote, carry lines into a new invoice.
+- **Invoices** — create/edit, line items, totals, print/PDF, mark paid/unpaid (syncs with Money), editable business details.
+- **Analytics** — log views/likes/saves/shares/watch-time/follows per post & platform (blanks allowed), platform summaries, top posts, rule-based insights with why-it-matters + follow-up.
+- **Suggestions** — Make next / Repeat / Improve / Test, each with an action and (for analytics-based ones) the evidence.
+- **Templates** — starter templates + save your own, hook structure, cover, CapCut/Canva links.
+- **Profile** — display name, intro, links (copy one/all), follower goal progress, featured portfolio.
+- **Settings** — storage info, export/import backup, weekly & follower goals, Brand Deals toggle, AI connect, integration stubs, schedule toggles, reset.
+- **Data survives refresh** + **Export / Import backup**.
 
-## Coming next (phases 2–5)
+## Verified workflows
 
-Lineup/calendar + post cards · Money · Rates · Invoices · Analytics · Suggestions · Templates · Profile · Brand Deals (hidden until enabled) · AI toggle + integration stubs (Windsor.ai, email, messaging) + scheduled jobs.
+`npx vitest run src/verify.test.ts` — 15 checks covering: idea bank loads, daily-update extraction (finished task + blocker + time), Ready-in-one-tap, TikTok-live-while-IG-due, ask-which-platform, tentative plans, cross-post counts once, weekend protection, quote→invoice→paid→Money, demo exclusion, analytics→linked recommendation, brief first-task-with-reason, priority proposals.
 
 ## Run locally
 
