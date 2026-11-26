@@ -1,0 +1,157 @@
+/* Rolly Around Studios — design system
+   White base, warm neutrals, subtle per-series accents, readable status badges. */
+
+:root {
+  /* Warm neutral base */
+  --bg: #fcfaf7;            /* warm off-white page */
+  --surface: #ffffff;       /* cards */
+  --surface-2: #f6f1ea;     /* sand / inset */
+  --surface-3: #efe8de;     /* deeper sand */
+  --border: #e7ded2;        /* warm hairline */
+  --border-strong: #d9cdbc;
+
+  /* Text */
+  --ink: #2b2521;           /* near-black warm */
+  --ink-soft: #6b6155;      /* muted warm grey */
+  --ink-faint: #9b9184;
+
+  /* Subtle accent (brand) */
+  --accent: #c57b57;        /* terracotta */
+  --accent-soft: #f3e3d8;
+  --accent-ink: #8a4f31;
+
+  /* Series colours (subtle, readable) */
+  --series-stomach: #d98a5b;      /* warm orange — I Only Have One Stomach */
+  --series-stomach-bg: #fbeadd;
+  --series-guide: #6f9b8e;        /* sage — Your Unpaid Tour Guide */
+  --series-guide-bg: #e4efea;
+  --series-world: #8a7bb0;        /* dusty violet — Rolly Around the World */
+  --series-world-bg: #ece7f3;
+  --series-standalone: #9b9184;   /* neutral — Standalone */
+  --series-standalone-bg: #efe8de;
+
+  /* Status badge colours (high contrast for readability) */
+  --status-idea: #6b6155;         --status-idea-bg: #efe8de;
+  --status-progress: #b5851f;     --status-progress-bg: #faf0d4;
+  --status-ready: #2f7d4f;        --status-ready-bg: #d9f0e1;   /* green Ready to post */
+  --status-scheduled: #2b6cb0;    --status-scheduled-bg: #dbeafe;
+  --status-live: #a23b72;         --status-live-bg: #fbe0ee;
+  --status-posted: #6b6155;       --status-posted-bg: #e7ded2;
+
+  /* Semantic */
+  --ok: #2f7d4f;
+  --warn: #b5851f;
+  --danger: #c0392b;           --danger-bg: #fbe4e1;
+  --demo: #8a6d3b;             --demo-bg: #fdf3d6;  /* DEMO label */
+
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: 0 1px 2px rgba(43, 37, 33, 0.04), 0 4px 16px rgba(43, 37, 33, 0.05);
+  --shadow-lg: 0 8px 30px rgba(43, 37, 33, 0.10);
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+p { margin: 0; }
+button { font-family: inherit; cursor: pointer; }
+a { color: var(--accent-ink); }
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 550;
+  transition: background .15s, border-color .15s, transform .05s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn-primary:hover { background: #40382f; }
+.btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-accent:hover { background: var(--accent-ink); }
+.btn-sm { padding: 5px 10px; font-size: 12.5px; }
+.btn-ghost { border-color: transparent; background: transparent; }
+.btn-ghost:hover { background: var(--surface-2); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ---- Cards ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.card-pad { padding: 18px; }
+
+/* ---- Badges ---- */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: .01em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.badge-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+.badge-idea { color: var(--status-idea); background: var(--status-idea-bg); }
+.badge-progress { color: var(--status-progress); background: var(--status-progress-bg); }
+.badge-ready { color: var(--status-ready); background: var(--status-ready-bg); }
+.badge-scheduled { color: var(--status-scheduled); background: var(--status-scheduled-bg); }
+.badge-live { color: var(--status-live); background: var(--status-live-bg); }
+.badge-posted { color: var(--status-posted); background: var(--status-posted-bg); }
+.badge-demo { color: var(--demo); background: var(--demo-bg); border: 1px dashed #d8bf7e; }
+.badge-danger { color: var(--danger); background: var(--danger-bg); }
+
+/* Series pills */
+.series-pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; padding:3px 9px; border-radius:999px; }
+.series-stomach { color: var(--series-stomach); background: var(--series-stomach-bg); }
+.series-guide { color: var(--series-guide); background: var(--series-guide-bg); }
+.series-world { color: var(--series-world); background: var(--series-world-bg); }
+.series-standalone { color: var(--series-standalone); background: var(--series-standalone-bg); }
+
+/* ---- Forms ---- */
+input, textarea, select {
+  font-family: inherit; font-size: 14px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  width: 100%;
+}
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+label { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); display:block; margin-bottom: 5px; }
+
+.muted { color: var(--ink-soft); }
+.faint { color: var(--ink-faint); }
+.tiny { font-size: 12px; }
+
+/* utility */
+.row { display: flex; align-items: center; gap: 10px; }
+.wrap { flex-wrap: wrap; }
+.between { justify-content: space-between; }
+.stack { display: flex; flex-direction: column; }
+.gap-6 { gap: 6px; } .gap-8 { gap: 8px; } .gap-10 { gap: 10px; } .gap-12 { gap: 12px; } .gap-16 { gap: 16px; }
+.grow { flex: 1; }
