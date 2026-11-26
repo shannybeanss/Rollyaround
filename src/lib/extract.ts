@@ -51,8 +51,9 @@ export function extractChanges(transcript: string, data: AppData): ProposedChang
     });
   }
 
-  // Split into clauses for phrase-level signals
-  const clauses = text.split(/[.;\n]|,\s+(?:and|but|still|then)\s+/i).map((c) => c.trim()).filter(Boolean);
+  // Split into clauses for phrase-level signals. Keep "still" with its clause
+  // (it's part of "still need…"), only split on "and/but/then".
+  const clauses = text.split(/[.;\n]|,\s+(?:and|but|then)\s+/i).map((c) => c.trim()).filter(Boolean);
 
   for (const clause of clauses) {
     const cl = clause.toLowerCase();
@@ -120,6 +121,10 @@ export function extractChanges(transcript: string, data: AppData): ProposedChang
       continue;
     }
 
+    // A clause can carry BOTH a finished task and a leftover blocker,
+    // e.g. "I picked the photos, still need a cover". Detect each independently.
+    let matchedSomething = false;
+
     // finished a task like "I picked the photos"
     if (/\b(picked|chose|selected|finished|done with|wrote|recorded|filmed|shot)\b/.test(cl)) {
       out.push({
@@ -127,20 +132,23 @@ export function extractChanges(transcript: string, data: AppData): ProposedChang
         label: `Mark done: "${clause}"${top ? ` (on "${top.title}")` : ""}`,
         apply: () => {},
       });
-      // detect "still need X" → blocker / waiting
-      continue;
+      matchedSomething = true;
     }
 
-    // blockers / still need
-    if (/\b(still need|need to|waiting on|blocked|haven'?t|have to still)\b/.test(cl)) {
-      const label = clause.replace(/^(i )?(still )?/i, "").trim();
+    // blockers / still need (pull out the specific "still need X" fragment)
+    const needMatch = cl.match(/\b(?:still need|need to|still have to|have to still|waiting on)\b/);
+    if (needMatch || /\b(blocked|haven'?t)\b/.test(cl)) {
+      const frag = clause.slice(clause.toLowerCase().indexOf(needMatch ? needMatch[0] : "")).trim() || clause.trim();
+      const label = frag.replace(/^(and |but )?/i, "").trim();
       out.push({
         id: uid(), kind: "blocker", confidence: "clear", ideaId: top?.id,
         label: `Add to Waiting on you: "${label}"`,
         apply: (d) => { d.waiting.push({ id: uid(), label, ideaId: top?.id, done: false }); },
       });
-      continue;
+      matchedSomething = true;
     }
+
+    if (matchedSomething) continue;
 
     // new idea / hook
     if (/\b(idea|i want to|what if|hook)\b/.test(cl) && !top) {

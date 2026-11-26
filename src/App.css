@@ -124,3 +124,11 @@ table.rolly td { padding: 10px; border-bottom: 1px solid var(--border); }
   .app-main { padding: 16px 12px 90px; }
   .app-header-inner { padding: 12px 12px 0; }
 }
+
+/* Print — invoice only */
+@media print {
+  .app-header, .no-print, .modal-head, .modal-foot, .toast { display: none !important; }
+  .modal-backdrop { position: static; background: none; padding: 0; }
+  .modal { box-shadow: none; max-width: 100%; }
+  body { background: #fff; }
+}

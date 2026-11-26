@@ -3,7 +3,18 @@ import { StoreProvider, useStore } from "./store";
 import { ToastProvider } from "./components/Toast";
 import { Today } from "./pages/Today";
 import { Ideas } from "./pages/Ideas";
-import { Placeholder } from "./pages/Placeholder";
+import { Lineup } from "./pages/Lineup";
+import { Money } from "./pages/Money";
+import { Rates } from "./pages/Rates";
+import { Invoices } from "./pages/Invoices";
+import { Analytics } from "./pages/Analytics";
+import { Suggestions } from "./pages/Suggestions";
+import { Templates } from "./pages/Templates";
+import { Profile } from "./pages/Profile";
+import { Deals } from "./pages/Deals";
+import { Settings } from "./pages/Settings";
+import { IdeaModal } from "./pages/IdeaModal";
+import type { Idea, RateLine } from "./types";
 import "./theme.css";
 import "./App.css";
 
@@ -11,13 +22,14 @@ type TabId =
   | "today" | "ideas" | "lineup" | "money" | "rates"
   | "invoices" | "analytics" | "suggestions" | "templates" | "profile" | "deals";
 
-interface Tab { id: TabId; label: string }
-
 function Shell() {
   const { data } = useStore();
   const [tab, setTab] = useState<TabId>("today");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [openIdea, setOpenIdea] = useState<Idea | null>(null);
+  const [carried, setCarried] = useState<RateLine[] | null>(null);
 
-  const tabs: Tab[] = [
+  const tabs: { id: TabId; label: string }[] = [
     { id: "today", label: "Today" },
     { id: "ideas", label: "Ideas" },
     { id: "lineup", label: "Lineup" },
@@ -29,9 +41,9 @@ function Shell() {
     { id: "templates", label: "Templates" },
     { id: "profile", label: "Profile" },
   ];
-  if (data.settings.brandDealsEnabled) {
-    tabs.splice(3, 0, { id: "deals", label: "Brand Deals" });
-  }
+  if (data.settings.brandDealsEnabled) tabs.splice(3, 0, { id: "deals", label: "Brand Deals" });
+
+  const goIdea = (i: Idea) => { setTab("ideas"); setOpenIdea(i); };
 
   return (
     <>
@@ -40,9 +52,12 @@ function Shell() {
           <div className="brand-row">
             <div className="brand">
               <h1><span className="brand-mark">R</span> Rolly Around Studios</h1>
-              <div className="sub">Your private planner for @rollyaround · travel, food & experiences</div>
+              <div className="sub">Private planner for @rollyaround · travel, food & experiences</div>
             </div>
-            <span className="badge badge-idea" title="Where your data lives">Stored in this browser</span>
+            <div className="row gap-8">
+              <span className="badge badge-idea" title="Where your data lives">Stored in this browser</span>
+              <button className="btn btn-sm" onClick={() => setSettingsOpen(true)}>⚙ Settings</button>
+            </div>
           </div>
           <nav className="tabs">
             {tabs.map((t) => (
@@ -55,16 +70,19 @@ function Shell() {
       <main className="app-main">
         {tab === "today" && <Today />}
         {tab === "ideas" && <Ideas />}
-        {tab === "lineup" && <Placeholder title="Lineup / Planner / Calendar" desc="Priority posts, backup, weekly Plan/Film/Edit/Post timeline colour-coded by series, weekends free, conflict flags, and post cards with voiceover/carousel beats." />}
-        {tab === "money" && <Placeholder title="Money" desc="Total earned, paid this month, pending, overdue, 30-day due, cash-flow by month, and overdue chasers." />}
-        {tab === "rates" && <Placeholder title="Rates" desc="Your SGD rate card — editable services, usage periods, package total, copy a quote or carry lines into an invoice." />}
-        {tab === "invoices" && <Placeholder title="Invoices" desc="Create/edit invoices, line items, totals, PDF, mark paid — kept in sync with Money." />}
-        {tab === "analytics" && <Placeholder title="Analytics" desc="Log views/likes/saves/shares/watch time/follows per post & platform, platform summaries, top posts, what worked by series." />}
-        {tab === "suggestions" && <Placeholder title="AI Suggestions" desc="Make next / Repeat / Improve / Test — each with an action and the evidence behind it. Rule-based until an AI key is connected." />}
-        {tab === "templates" && <Placeholder title="Templates & References" desc="Save finished posts as editing templates; starter templates, hook bank and reference videos." />}
-        {tab === "profile" && <Placeholder title="Profile & Portfolio" desc="Display name, intro, social links, contact, follower counts, featured pieces." />}
-        {tab === "deals" && <Placeholder title="Brand Deals" desc="Pipeline from Inquiry to Paid, waiting-on filters, linked to planner & invoices." />}
+        {tab === "lineup" && <Lineup onOpenIdea={goIdea} />}
+        {tab === "money" && <Money />}
+        {tab === "rates" && <Rates onCarryToInvoice={(lines) => { setCarried(lines); setTab("invoices"); }} />}
+        {tab === "invoices" && <Invoices carriedLines={carried} clearCarried={() => setCarried(null)} />}
+        {tab === "analytics" && <Analytics />}
+        {tab === "suggestions" && <Suggestions onOpenIdea={goIdea} onGoLineup={() => setTab("lineup")} />}
+        {tab === "templates" && <Templates />}
+        {tab === "profile" && <Profile />}
+        {tab === "deals" && <Deals />}
       </main>
+
+      {settingsOpen && <Settings onClose={() => setSettingsOpen(false)} />}
+      {openIdea && <IdeaModal idea={openIdea} onClose={() => setOpenIdea(null)} />}
     </>
   );
 }
