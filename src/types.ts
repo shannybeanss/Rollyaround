@@ -308,6 +308,7 @@ export interface AppData {
   version: number;
   seriesList: string[];        // this account's content series
   todayPlan?: TodayPlan;       // your own focus for today (beats the suggestion)
+  pinnedPriorities?: string[]; // idea IDs you've chosen as this week's priorities
   ideas: Idea[];
   scheduledTasks: ScheduledTask[];
   waiting: WaitingItem[];

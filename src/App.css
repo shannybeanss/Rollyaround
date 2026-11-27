@@ -13,14 +13,16 @@
   padding: 14px 18px 0;
 }
 .brand-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.brand h1 { font-size: 20px; display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 20px; display: flex; align-items: baseline; gap: 8px; }
 .brand .sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 1px; }
-.brand-mark {
-  width: 26px; height: 26px; border-radius: 8px;
-  background: linear-gradient(135deg, var(--accent), #e0a784);
-  display: inline-flex; align-items: center; justify-content: center;
-  color: #fff; font-weight: 800; font-size: 14px;
+.brand-script {
+  font-family: "Brush Script MT", "Snell Roundhand", "Segoe Script", cursive;
+  font-size: 30px;
+  font-weight: 400;
+  color: var(--accent-ink);
+  line-height: 1;
 }
+.brand-studios { font-weight: 650; letter-spacing: -0.01em; }
 
 /* Horizontal tabs */
 .tabs {

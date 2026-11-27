@@ -52,7 +52,7 @@ function Shell() {
         <div className="app-header-inner">
           <div className="brand-row">
             <div className="brand">
-              <h1><span className="brand-mark">R</span> Rolly Studios</h1>
+              <h1><span className="brand-script">Rolly</span> <span className="brand-studios">Studios</span></h1>
               <div className="sub">Private planner · {account.name}</div>
             </div>
             <div className="row gap-8">

@@ -18,6 +18,16 @@ export function Lineup({ onOpenIdea }: { onOpenIdea?: (idea: Idea) => void }) {
   const needPlan = useMemo(() => needsAPlan(data), [data]);
 
   const [adding, setAdding] = useState<{ date: string } | null>(null);
+  const [pickPriority, setPickPriority] = useState(false);
+
+  const pinPriority = (ideaId: string) =>
+    update((d) => {
+      const list = d.pinnedPriorities ?? [];
+      if (!list.includes(ideaId)) d.pinnedPriorities = [...list, ideaId];
+      return d;
+    });
+  const unpinPriority = (ideaId: string) =>
+    update((d) => { d.pinnedPriorities = (d.pinnedPriorities ?? []).filter((x) => x !== ideaId); return d; });
 
   const toggleTask = (id: string) =>
     update((d) => { const t = d.scheduledTasks.find((x) => x.id === id); if (t) t.done = !t.done; return d; });
@@ -35,7 +45,7 @@ export function Lineup({ onOpenIdea }: { onOpenIdea?: (idea: Idea) => void }) {
 
   return (
     <div>
-      <div className="agent-note"><b>Lineup</b><span>Singapore time. Weekends kept free, weekdays capped at 2 production tasks. Rule-based priorities from your bank.</span></div>
+      <div className="agent-note"><b>Lineup</b><span>Singapore time. Weekends free, weekdays capped at 2 tasks. Pin your own priorities, or use the rule-based suggestions.</span></div>
 
       {/* Quick action */}
       {quick && (
@@ -48,18 +58,29 @@ export function Lineup({ onOpenIdea }: { onOpenIdea?: (idea: Idea) => void }) {
       )}
 
       {/* Priority proposals */}
-      <h3 style={{ fontSize: 16, marginBottom: 10 }}>This week's priorities</h3>
+      <div className="row between" style={{ marginBottom: 10 }}>
+        <h3 style={{ fontSize: 16 }}>This week's priorities</h3>
+        <button className="btn btn-sm btn-accent" onClick={() => setPickPriority(true)}>+ Add your own</button>
+      </div>
       <div className="grid-auto" style={{ marginBottom: 20 }}>
         {priorities.map((p) => (
-          <div key={p.idea.id} className="card card-pad idea-card" style={{ borderLeft: `4px solid ${SERIES_META[p.idea.series].accent}` }}>
-            <div className="row between"><span className="badge badge-scheduled">{p.kind}</span><StageBadge stage={p.idea.stage} /></div>
+          <div key={p.idea.id} className="card card-pad idea-card" style={{ borderLeft: `4px solid ${SERIES_META[p.idea.series].accent}`, ...(p.pinned ? { outline: "1.5px solid var(--accent)" } : {}) }}>
+            <div className="row between">
+              <span className={`badge ${p.pinned ? "badge-ready" : "badge-scheduled"}`}>{p.pinned ? "📌 Your pick" : p.kind}</span>
+              <StageBadge stage={p.idea.stage} />
+            </div>
             <div className="title">{p.idea.title}</div>
             <SeriesPill series={p.idea.series} />
             <p className="tiny muted">{p.why}</p>
-            {onOpenIdea && <button className="btn btn-sm" style={{ alignSelf: "flex-start" }} onClick={() => onOpenIdea(p.idea)}>Open post card</button>}
+            <div className="row gap-8 wrap" style={{ marginTop: "auto", paddingTop: 6 }}>
+              {onOpenIdea && <button className="btn btn-sm" onClick={() => onOpenIdea(p.idea)}>Open</button>}
+              {p.pinned
+                ? <button className="btn btn-sm btn-ghost" style={{ color: "var(--danger)" }} onClick={() => unpinPriority(p.idea.id)}>Remove</button>
+                : <button className="btn btn-sm" onClick={() => { pinPriority(p.idea.id); show("Pinned as your priority"); }}>📌 Pin this</button>}
+            </div>
           </div>
         ))}
-        {priorities.length === 0 && <p className="muted">Mark some ideas "Try" to get priority proposals.</p>}
+        {priorities.length === 0 && <p className="muted">Mark some ideas "Try", or tap “+ Add your own” to pick this week's priorities.</p>}
       </div>
 
       {/* Bottleneck check */}
@@ -133,6 +154,31 @@ export function Lineup({ onOpenIdea }: { onOpenIdea?: (idea: Idea) => void }) {
       </div>
 
       {adding && <AddTaskModal date={adding.date} onClose={() => setAdding(null)} onAdd={addTask} />}
+      {pickPriority && <PickPriorityModal onClose={() => setPickPriority(false)} onPick={(id) => { pinPriority(id); show("Pinned as your priority"); setPickPriority(false); }} pinned={data.pinnedPriorities ?? []} />}
+    </div>
+  );
+}
+
+function PickPriorityModal({ onClose, onPick, pinned }: { onClose: () => void; onPick: (id: string) => void; pinned: string[] }) {
+  const { data } = useStore();
+  const [q, setQ] = useState("");
+  const pieces = data.ideas.filter((i) => !i.isDemo && i.stage !== "Posted" && !pinned.includes(i.id) && (!q || i.title.toLowerCase().includes(q.toLowerCase())));
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head"><h3>Pick a priority</h3><button className="btn btn-ghost" onClick={onClose}>✕</button></div>
+        <div className="modal-body">
+          <input placeholder="Search your ideas…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <div className="stack gap-6" style={{ maxHeight: 340, overflowY: "auto" }}>
+            {pieces.map((i) => (
+              <button key={i.id} className="btn" style={{ justifyContent: "space-between" }} onClick={() => onPick(i.id)}>
+                <span>{i.title}</span><span className="tiny muted">{i.series}</span>
+              </button>
+            ))}
+            {pieces.length === 0 && <p className="tiny muted">No matching ideas.</p>}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

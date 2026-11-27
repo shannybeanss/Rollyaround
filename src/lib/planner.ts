@@ -4,29 +4,42 @@ import { startOfWeekSGT } from "./helpers";
 
 export interface PriorityProposal {
   idea: Idea;
-  kind: "Quick win" | "Useful guide" | "Portfolio piece" | "Backup";
+  kind: "Quick win" | "Useful guide" | "Portfolio piece" | "Backup" | "Your pick";
   why: string;
+  pinned: boolean;   // true = you chose it (not a suggestion)
 }
 
-// Favour: a quick win from existing footage, a useful guide, a portfolio piece.
-export function proposePriorities(data: AppData): PriorityProposal[] {
-  const pool = data.ideas.filter((i) => !i.isDemo && i.stage !== "Posted" && i.verdict !== "Skip" && i.verdict !== "Later" && !i.verifyBeforeLineup);
+// Rule-based suggestions only (no pinned). Favour quick win + guide + portfolio.
+function ruleSuggestions(data: AppData, excludeIds: Set<string>): PriorityProposal[] {
+  const pool = data.ideas.filter((i) => !i.isDemo && i.stage !== "Posted" && i.verdict !== "Skip" && i.verdict !== "Later" && !i.verifyBeforeLineup && !excludeIds.has(i.id));
   const out: PriorityProposal[] = [];
 
-  const quickWin = pool.find((i) => i.stage === "Edit" || i.stage === "Ready")
-    ?? pool.find((i) => i.rollyRating);
-  if (quickWin) out.push({ idea: quickWin, kind: "Quick win", why: quickWin.stage === "Edit" || quickWin.stage === "Ready" ? "Already near done — fastest thing to ship." : "A Rolly Rating receipt is quick to cut from footage you likely have." });
+  const quickWin = pool.find((i) => i.stage === "Edit" || i.stage === "Ready") ?? pool.find((i) => i.rollyRating);
+  if (quickWin) out.push({ idea: quickWin, pinned: false, kind: "Quick win", why: quickWin.stage === "Edit" || quickWin.stage === "Ready" ? "Already near done — fastest thing to ship." : "A Rolly Rating receipt is quick to cut from footage you likely have." });
 
-  const guide = pool.find((i) => i.series === "Your Unpaid Tour Guide" && i.id !== quickWin?.id);
-  if (guide) out.push({ idea: guide, kind: "Useful guide", why: "Guides get saved and keep working for weeks — steady growth." });
+  const guide = pool.find((i) => (i.series === "Your Unpaid Tour Guide" || i.series === "Recipes") && i.id !== quickWin?.id);
+  if (guide) out.push({ idea: guide, pinned: false, kind: "Useful guide", why: "Saveable content keeps working for weeks — steady growth." });
 
-  const portfolio = pool.find((i) => i.series === "Rolly Around the World" && i.id !== quickWin?.id && i.id !== guide?.id);
-  if (portfolio) out.push({ idea: portfolio, kind: "Portfolio piece", why: "A travel story rounds out your portfolio when workload allows." });
+  const portfolio = pool.find((i) => (i.series === "Rolly Around the World" || i.series === "Cook With Me") && i.id !== quickWin?.id && i.id !== guide?.id);
+  if (portfolio) out.push({ idea: portfolio, pinned: false, kind: "Portfolio piece", why: "A story piece rounds out your portfolio when workload allows." });
 
   const backup = pool.find((i) => ![quickWin?.id, guide?.id, portfolio?.id].includes(i.id));
-  if (backup) out.push({ idea: backup, kind: "Backup", why: "Ready to pull in if one of the three slips." });
+  if (backup) out.push({ idea: backup, pinned: false, kind: "Backup", why: "Ready to pull in if one of the three slips." });
 
   return out;
+}
+
+// Combined: your pinned picks first, then suggestions fill the rest.
+export function proposePriorities(data: AppData): PriorityProposal[] {
+  const pinnedIds = data.pinnedPriorities ?? [];
+  const pinned: PriorityProposal[] = pinnedIds
+    .map((id) => data.ideas.find((i) => i.id === id))
+    .filter((i): i is Idea => !!i)
+    .map((idea) => ({ idea, pinned: true, kind: "Your pick" as const, why: "You picked this as a priority this week." }));
+
+  const exclude = new Set(pinnedIds);
+  const suggestions = ruleSuggestions(data, exclude);
+  return [...pinned, ...suggestions];
 }
 
 // A clear next action for a 10–20 minute window.
