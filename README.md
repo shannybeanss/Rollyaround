@@ -54,3 +54,5 @@ npm run dev
 
 - **Demo data is clearly labelled `DEMO`** and excluded from real totals and recommendations. Rates, invoice identity, follower counts and some analytics are DEMO placeholders — edit them in-app.
 - All scheduling uses **Singapore time**. Weekends are kept free by default; weekdays cap at two production tasks.
+
+Planner is back on GitHub Pages — last redeploy triggered 28 Nov 2026.
