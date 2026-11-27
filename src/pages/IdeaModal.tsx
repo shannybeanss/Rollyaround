@@ -126,9 +126,22 @@ export function IdeaModal({ idea, onClose }: { idea: Idea; onClose: () => void }
 
           {suggestedTemplate && <p className="tiny muted">💡 Suggested template for this series: <b>{suggestedTemplate.name}</b></p>}
         </div>
-        <div className="modal-foot">
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-accent" onClick={save}>Save</button>
+        <div className="modal-foot" style={{ justifyContent: "space-between" }}>
+          <button className="btn btn-ghost" style={{ color: "var(--danger)" }} onClick={() => {
+            if (!confirm(`Delete "${draft.title}"? This also removes its scheduled tasks.`)) return;
+            update((d) => {
+              d.ideas = d.ideas.filter((x) => x.id !== draft.id);
+              d.scheduledTasks = d.scheduledTasks.filter((t) => t.ideaId !== draft.id);
+              d.waiting = d.waiting.filter((w) => w.ideaId !== draft.id);
+              return d;
+            });
+            show("Idea deleted");
+            onClose();
+          }}>🗑 Delete</button>
+          <div className="row gap-10">
+            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button className="btn btn-accent" onClick={save}>Save</button>
+          </div>
         </div>
       </div>
     </div>

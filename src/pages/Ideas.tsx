@@ -45,6 +45,22 @@ export function Ideas() {
     show(`"${idea.title}" → Ready to post`);
   };
 
+  const deleteIdea = (idea: Idea) => {
+    if (!confirm(`Delete "${idea.title}"? This also removes its scheduled tasks.`)) return;
+    const removedIdea = structuredClone(idea);
+    const removedTasks = data.scheduledTasks.filter((t) => t.ideaId === idea.id);
+    update((d) => {
+      d.ideas = d.ideas.filter((x) => x.id !== idea.id);
+      d.scheduledTasks = d.scheduledTasks.filter((t) => t.ideaId !== idea.id);
+      d.waiting = d.waiting.filter((w) => w.ideaId !== idea.id);
+      return d;
+    });
+    show(`Deleted "${idea.title}"`, () => {
+      update((d) => { d.ideas.unshift(removedIdea); d.scheduledTasks.push(...removedTasks); return d; });
+      show("Restored");
+    });
+  };
+
   return (
     <div>
       <div className="agent-note">
@@ -103,6 +119,7 @@ export function Ideas() {
                 <button className="btn btn-sm btn-accent" onClick={() => markReady(idea)}>Mark edit ready</button>
               )}
               <button className="btn btn-sm" onClick={() => setLogging(idea)}>Log published</button>
+              <button className="btn btn-sm btn-ghost" style={{ color: "var(--danger)", marginLeft: "auto" }} onClick={() => deleteIdea(idea)} title="Delete idea">🗑 Delete</button>
             </div>
           </div>
         ))}
