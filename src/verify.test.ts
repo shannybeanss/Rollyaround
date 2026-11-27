@@ -68,6 +68,23 @@ describe("Daily update → one finished task + a next action", () => {
     const changes = extractChanges("maybe I'll film the JB review tomorrow", d);
     expect(changes.some((c) => c.kind === "tentative")).toBe(true);
   });
+  it("captures a filmed-today video as an idea to consider", () => {
+    const d = fresh();
+    const changes = extractChanges("today I take some video of recipe to make a burger", d);
+    const idea = changes.find((c) => c.kind === "idea");
+    expect(idea).toBeTruthy();
+    idea!.apply(d);
+    const saved = d.ideas.find((i) => i.title.toLowerCase().includes("burger"))!;
+    expect(saved).toBeTruthy();
+    expect(saved.verdict).toBe("Later"); // parked "to consider"
+  });
+  it("flags a different account and asks before saving", () => {
+    const d = fresh();
+    const changes = extractChanges("today I take some video of recipe to make a burger, its for another account rollybelly", d);
+    const idea = changes.find((c) => c.kind === "idea")!;
+    expect(idea.confidence).toBe("ask");
+    expect(idea.question).toMatch(/rollybelly/i);
+  });
 });
 
 describe("Weekly count — cross-post counts once", () => {

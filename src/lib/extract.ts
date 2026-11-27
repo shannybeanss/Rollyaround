@@ -150,15 +150,43 @@ export function extractChanges(transcript: string, data: AppData): ProposedChang
 
     if (matchedSomething) continue;
 
-    // new idea / hook
-    if (/\b(idea|i want to|what if|hook)\b/.test(cl) && !top) {
+    // Filming / content mention → capture as an idea "to consider".
+    // Broad net: explicit idea words OR any sign of filming/making content.
+    const ideaSignal =
+      /\b(idea|i want to|what if|hook|concept)\b/.test(cl) ||
+      /\b(take|took|taking|make|made|making|shoot|shooting|film|filming|record|recording|recorded|capture)\b.*\b(video|clip|content|recipe|footage|reel|carousel|vlog|photos?)\b/.test(cl) ||
+      /\b(video|clip|content|recipe|footage|reel|carousel|vlog)\b.*\b(today|this|of|for|about)\b/.test(cl);
+
+    if (ideaSignal && !top) {
+      // Detect "for another account / for <name>" so accounts don't get mixed.
+      const acctMatch = clause.match(/\bfor\s+(?:another account\s+)?([A-Za-z][A-Za-z0-9_@.]{2,30})/i);
+      const otherAccount = /another account/i.test(clause) || (acctMatch && !/rolly ?around/i.test(acctMatch[1]));
+      const accountName = acctMatch?.[1]?.trim();
+      const noteParts: string[] = ["Captured from a daily update — consider this."];
+      if (otherAccount) noteParts.push(`⚠ You mentioned a different account${accountName ? ` (${accountName})` : ""} — confirm which account this belongs to.`);
+
+      // Guess a series from keywords (food words → One Stomach, etc.).
+      const t = clause.toLowerCase();
+      const series = /recipe|burger|food|eat|café|cafe|matcha|bakery|restaurant|dish|cook/.test(t)
+        ? "I Only Have One Stomach"
+        : /itinerary|guide|pack|cost|how to|day trip|tips/.test(t)
+        ? "Your Unpaid Tour Guide"
+        : /adventure|story|diary|experience|discover/.test(t)
+        ? "Rolly Around the World"
+        : "Standalone";
+
+      const cleanTitle = clause.replace(/^["']|["']$/g, "").replace(/^today i\s+/i, "").slice(0, 80);
+
       out.push({
-        id: uid(), kind: "idea", confidence: "clear",
-        label: `Capture new idea: "${clause}"`,
-        apply: (d) => { /* created as Standalone draft; user refines in Ideas */
-          d.ideas.push({
-            id: uid(), title: clause.slice(0, 80), series: "Standalone", isDemo: false,
-            rawThought: clause, hooks: [], references: [], stage: "Idea",
+        id: uid(), kind: "idea", confidence: otherAccount ? "ask" : "clear",
+        question: otherAccount ? `This sounds like it's for ${accountName ?? "another account"} — still save it to Rolly Around as an idea to consider?` : undefined,
+        label: `Save idea to consider: "${cleanTitle}"${otherAccount ? ` (flagged: different account)` : ` → ${series}`}`,
+        apply: (d) => {
+          d.ideas.unshift({
+            id: uid(), title: cleanTitle, series: series as import("../types").Series, isDemo: false,
+            rawThought: clause, verdict: "Later",
+            notes: noteParts.join(" "),
+            hooks: [], references: [], stage: "Idea",
             platforms: { TikTok:{status:"none"}, Instagram:{status:"none"}, Lemon8:{status:"none"}, Xiaohongshu:{status:"none"}, "YouTube Shorts":{status:"none"} },
             checklist: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
           });

@@ -75,7 +75,7 @@ const portfolio: PortfolioPiece[] = [
 // ---- Profile (DEMO defaults, editable) ----
 const profile: ProfileData = {
   displayName: "Rolly Around",
-  intro: "Hi, I'm Rolly — a travel, food and experience creator. I'm the adventurous friend who shows you something worth doing and tells you what it was actually like. (DEMO intro — edit me.)",
+  intro: "Hi, I'm Rolly — a travel, food and experience creator. I'm the adventurous friend who shows you something worth doing and tells you what it was actually like. Edit this intro anytime.",
   contactEmail: "collabs@example.com",
   languages: "English and Mandarin",
   tags: ["Travel", "Food", "Experiences", "Café", "Itineraries"],
