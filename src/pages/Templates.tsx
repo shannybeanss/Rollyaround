@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { useToast } from "../components/Toast";
 import { SeriesPill } from "../components/ui";
-import { SERIES_LIST, type Template, type Series } from "../types";
+import { type Template, type Series } from "../types";
 import { uid } from "../lib/helpers";
 
 export function Templates() {
@@ -39,7 +39,7 @@ export function Templates() {
         {mine.map((t) => <TemplateCard key={t.id} t={t} onEdit={() => setEditing(structuredClone(t))} onRemove={() => remove(t.id)} />)}
       </div>
 
-      {editing && <TemplateEditor t={editing} onSave={save} onClose={() => setEditing(null)} />}
+      {editing && <TemplateEditor t={editing} seriesList={data.seriesList} onSave={save} onClose={() => setEditing(null)} />}
     </div>
   );
 }
@@ -59,7 +59,7 @@ function TemplateCard({ t, onEdit, onRemove }: { t: Template; onEdit: () => void
   );
 }
 
-function TemplateEditor({ t, onSave, onClose }: { t: Template; onSave: (t: Template) => void; onClose: () => void }) {
+function TemplateEditor({ t, seriesList, onSave, onClose }: { t: Template; seriesList: string[]; onSave: (t: Template) => void; onClose: () => void }) {
   const [d, setD] = useState<Template>(t);
   const F = (k: keyof Template, label: string, ta = false) => (
     <div><label>{label}</label>{ta ? <textarea rows={2} value={(d[k] as string) ?? ""} onChange={(e) => setD({ ...d, [k]: e.target.value })} /> : <input value={(d[k] as string) ?? ""} onChange={(e) => setD({ ...d, [k]: e.target.value })} />}</div>
@@ -70,7 +70,7 @@ function TemplateEditor({ t, onSave, onClose }: { t: Template; onSave: (t: Templ
         <div className="modal-head"><h3>Template</h3><button className="btn btn-ghost" onClick={onClose}>✕</button></div>
         <div className="modal-body">
           {F("name", "Name")}
-          <div><label>Series</label><select value={d.series ?? ""} onChange={(e) => setD({ ...d, series: (e.target.value || undefined) as Series })}><option value="">—</option>{SERIES_LIST.map((s) => <option key={s}>{s}</option>)}</select></div>
+          <div><label>Series</label><select value={d.series ?? ""} onChange={(e) => setD({ ...d, series: (e.target.value || undefined) as Series })}><option value="">—</option>{seriesList.map((s) => <option key={s}>{s}</option>)}</select></div>
           {F("openingShot", "Opening shot")}
           {F("hook", "Hook")}
           {F("structure", "Clip / slide order & voiceover structure", true)}

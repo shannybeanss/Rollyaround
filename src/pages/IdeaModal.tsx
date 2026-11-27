@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../store";
 import { useToast } from "../components/Toast";
-import { SERIES_LIST, type Idea, type Series, type Verdict, type ProductionStage, type Platform, type FootageStatus, PLATFORMS } from "../types";
+import { type Idea, type Series, type Verdict, type ProductionStage, type Platform, type FootageStatus, PLATFORMS } from "../types";
 import { uid } from "../lib/helpers";
 import { starterStoryboard } from "../lib/storyboard";
 
@@ -42,7 +42,7 @@ export function IdeaModal({ idea, onClose }: { idea: Idea; onClose: () => void }
           <div className="grid-2" style={{ gap: 12 }}>
             <div><label>Series</label>
               <select value={draft.series} onChange={(e) => set("series", e.target.value as Series)}>
-                {SERIES_LIST.map((s) => <option key={s}>{s}</option>)}
+                {data.seriesList.map((s) => <option key={s}>{s}</option>)}
               </select>
             </div>
             <div><label>Destination</label><input value={draft.destination ?? ""} onChange={(e) => set("destination", e.target.value)} /></div>

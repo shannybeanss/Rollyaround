@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useStore } from "../store";
 import { useToast } from "../components/Toast";
 import { SeriesPill, StageBadge, PlatformBadge, DemoBadge } from "../components/ui";
-import { SERIES_LIST, type Idea, type Series, type Platform } from "../types";
+import { type Idea, type Series, type Platform } from "../types";
 import { activePlatforms } from "../lib/helpers";
 import { IdeaModal } from "./IdeaModal";
 import { QuickCapture } from "./QuickCapture";
@@ -110,7 +110,7 @@ export function Ideas() {
       </div>
       <div className="filter-bar">
         <button className={`chip ${seriesFilter === "all" ? "active" : ""}`} onClick={() => setSeriesFilter("all")}>All series</button>
-        {SERIES_LIST.map((s) => (
+        {data.seriesList.map((s) => (
           <button key={s} className={`chip ${seriesFilter === s ? "active" : ""}`} onClick={() => setSeriesFilter(s)}>{s}</button>
         ))}
         <select value={destFilter} onChange={(e) => setDestFilter(e.target.value)} style={{ width: "auto", minWidth: 150 }}>

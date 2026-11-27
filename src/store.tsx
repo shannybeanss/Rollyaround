@@ -1,28 +1,28 @@
-// Rolly Around Studios — data store.
-// Persists to localStorage now (survives refresh). Structured so a Supabase
-// sync layer can be dropped in without changing any component code.
+// Rolly Around Studios — data store (multi-account).
 //
-// Safety: before any reset or import (and on demand), we save a timestamped
-// snapshot of the current data to a separate history key so nothing is lost
-// by accident. You can restore any snapshot from Settings → Backups & history.
+// Two creator accounts (Rolly Around travel, Rolly Belly cooking), each with
+// its own AppData. `data`/`update` always target the ACTIVE account so every
+// page component keeps working unchanged. Account switching + history live on top.
+//
+// Migration: older single-account saves are wrapped into the Rolly Around
+// account automatically, after snapshotting, so nothing is lost.
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import type { AppData } from "./types";
-import { seedAppData } from "./seed/defaults";
+import type { AppData, MultiAccountData, CreatorAccount } from "./types";
+import { seedAppData, seedCookingData, seedMultiAccount } from "./seed/defaults";
 
-const STORAGE_KEY = "rolly-around-studios/v1";
+const STORAGE_KEY = "rolly-around-studios/v1";   // kept: now holds MultiAccountData
 const HISTORY_KEY = "rolly-around-studios/history/v1";
 const MAX_SNAPSHOTS = 20;
 
 export interface Snapshot {
   id: string;
-  at: string;          // ISO timestamp
-  reason: string;      // "Before reset", "Before import", "Manual save", "Auto"
+  at: string;
+  reason: string;
   ideaCount: number;
-  data: AppData;
+  data: MultiAccountData;
 }
 
-// Detect whether localStorage actually persists (it can be blocked on file://).
 export function storageWorks(): boolean {
   try {
     const k = "__rolly_test__";
@@ -34,14 +34,40 @@ export function storageWorks(): boolean {
   }
 }
 
-function load(): AppData {
+// Is this an old single-account save (has `ideas` at the top level)?
+function isLegacy(obj: unknown): obj is AppData {
+  return !!obj && typeof obj === "object" && Array.isArray((obj as AppData).ideas) && !("accounts" in (obj as object) && Array.isArray((obj as MultiAccountData).accounts) && (obj as MultiAccountData).schemaVersion >= 2);
+}
+
+function migrate(legacy: AppData): MultiAccountData {
+  // Ensure the legacy travel data has a seriesList.
+  const travel: AppData = { ...legacy, seriesList: legacy.seriesList ?? seedAppData().seriesList };
+  return {
+    schemaVersion: 2,
+    activeAccountId: "rollyaround",
+    accounts: [
+      { id: "rollyaround", name: "Rolly Around", emoji: "🌍", data: travel },
+      { id: "rollybelly", name: "Rolly Belly", emoji: "🍳", data: seedCookingData() },
+    ],
+  };
+}
+
+function load(): MultiAccountData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as AppData;
-  } catch {
-    // ignore corrupt data, fall through to seed
-  }
-  const seeded = seedAppData();
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && (parsed as MultiAccountData).schemaVersion >= 2 && Array.isArray((parsed as MultiAccountData).accounts)) {
+        return parsed as MultiAccountData;
+      }
+      if (isLegacy(parsed)) {
+        const migrated = migrate(parsed as AppData);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+        return migrated;
+      }
+    }
+  } catch { /* fall through */ }
+  const seeded = seedMultiAccount();
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded)); } catch { /* ignore */ }
   return seeded;
 }
@@ -53,14 +79,17 @@ function loadHistory(): Snapshot[] {
   } catch { /* ignore */ }
   return [];
 }
-
 function saveHistory(list: Snapshot[]) {
-  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, MAX_SNAPSHOTS))); } catch { /* ignore quota */ }
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, MAX_SNAPSHOTS))); } catch { /* ignore */ }
 }
 
 interface StoreCtx {
-  data: AppData;
-  update: (fn: (draft: AppData) => AppData) => void;
+  multi: MultiAccountData;
+  account: CreatorAccount;
+  data: AppData;                                   // active account's data
+  update: (fn: (draft: AppData) => AppData) => void; // edits active account
+  switchAccount: (id: string) => void;
+  renameSeriesList: (list: string[]) => void;
   reset: () => void;
   exportData: () => void;
   importData: (json: string) => boolean;
@@ -73,79 +102,89 @@ interface StoreCtx {
 const Ctx = createContext<StoreCtx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<AppData>(() => load());
+  const [multi, setMulti] = useState<MultiAccountData>(() => load());
   const [history, setHistory] = useState<Snapshot[]>(() => loadHistory());
   const saveTimer = useRef<number | null>(null);
 
-  // Debounced persistence so rapid edits don't thrash localStorage.
   useEffect(() => {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* ignore quota */ }
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(multi)); } catch { /* ignore */ }
     }, 250);
     return () => { if (saveTimer.current) window.clearTimeout(saveTimer.current); };
-  }, [data]);
+  }, [multi]);
 
-  const pushSnapshot = (snapData: AppData, reason: string): Snapshot[] => {
+  const account = multi.accounts.find((a) => a.id === multi.activeAccountId) ?? multi.accounts[0];
+  const data = account.data;
+
+  const totalIdeas = (m: MultiAccountData) => m.accounts.reduce((s, a) => s + a.data.ideas.length, 0);
+
+  const pushSnapshot = (snapMulti: MultiAccountData, reason: string): Snapshot[] => {
     const snap: Snapshot = {
       id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
       at: new Date().toISOString(),
       reason,
-      ideaCount: snapData.ideas.length,
-      data: structuredClone(snapData),
+      ideaCount: totalIdeas(snapMulti),
+      data: structuredClone(snapMulti),
     };
     const next = [snap, ...history].slice(0, MAX_SNAPSHOTS);
-    setHistory(next);
-    saveHistory(next);
+    setHistory(next); saveHistory(next);
     return next;
   };
 
-  const update: StoreCtx["update"] = (fn) => setData((prev) => fn(structuredClone(prev)));
+  // Edit ONLY the active account's data.
+  const update: StoreCtx["update"] = (fn) =>
+    setMulti((prev) => {
+      const copy = structuredClone(prev);
+      const acc = copy.accounts.find((a) => a.id === copy.activeAccountId) ?? copy.accounts[0];
+      acc.data = fn(acc.data);
+      return copy;
+    });
 
-  const snapshot = (reason: string) => { pushSnapshot(data, reason); };
+  const switchAccount = (id: string) =>
+    setMulti((prev) => ({ ...structuredClone(prev), activeAccountId: id }));
 
-  const reset = () => {
-    pushSnapshot(data, "Before reset");   // save current state first
-    setData(seedAppData());
-  };
+  const renameSeriesList = (list: string[]) =>
+    update((d) => ({ ...d, seriesList: list }));
+
+  const snapshot = (reason: string) => pushSnapshot(multi, reason);
+
+  const reset = () => { pushSnapshot(multi, "Before reset"); setMulti(seedMultiAccount()); };
 
   const restoreSnapshot = (id: string) => {
     const snap = history.find((s) => s.id === id);
     if (!snap) return;
-    pushSnapshot(data, "Before restore"); // also snapshot what we're leaving
-    setData(structuredClone(snap.data));
+    pushSnapshot(multi, "Before restore");
+    setMulti(structuredClone(snap.data));
   };
 
   const deleteSnapshot = (id: string) => {
     const next = history.filter((s) => s.id !== id);
-    setHistory(next);
-    saveHistory(next);
+    setHistory(next); saveHistory(next);
   };
 
   const exportData = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(multi, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `rolly-around-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    a.href = url; a.download = `rolly-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click(); URL.revokeObjectURL(url);
   };
 
   const importData = (json: string): boolean => {
     try {
-      const parsed = JSON.parse(json) as AppData;
-      if (!parsed || !Array.isArray(parsed.ideas)) return false;
-      pushSnapshot(data, "Before import"); // save current state first
-      setData(parsed);
-      return true;
-    } catch {
+      const parsed = JSON.parse(json);
+      pushSnapshot(multi, "Before import");
+      if (parsed && (parsed as MultiAccountData).schemaVersion >= 2 && Array.isArray((parsed as MultiAccountData).accounts)) {
+        setMulti(parsed as MultiAccountData); return true;
+      }
+      if (isLegacy(parsed)) { setMulti(migrate(parsed as AppData)); return true; }
       return false;
-    }
+    } catch { return false; }
   };
 
   return (
-    <Ctx.Provider value={{ data, update, reset, exportData, importData, history, snapshot, restoreSnapshot, deleteSnapshot }}>
+    <Ctx.Provider value={{ multi, account, data, update, switchAccount, renameSeriesList, reset, exportData, importData, history, snapshot, restoreSnapshot, deleteSnapshot }}>
       {children}
     </Ctx.Provider>
   );

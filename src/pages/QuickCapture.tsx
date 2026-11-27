@@ -1,20 +1,29 @@
 import { useState } from "react";
 import { useStore } from "../store";
 import { useToast } from "../components/Toast";
-import { SERIES_LIST, type Idea, type Series, type Verdict } from "../types";
+import { type Idea, type Series, type Verdict } from "../types";
 import { uid } from "../lib/helpers";
 
-// Rule-based suggestion for a captured idea (title/series/payoff/angle/next step/verdict).
-function suggest(text: string): { title: string; series: Series; payoff: string; angle: string; firstTask: string; reason: string; verdict: Verdict } {
+// Rule-based suggestion. Picks the best-matching series from THIS account's list.
+function suggest(text: string, seriesList: string[]): { title: string; series: Series; payoff: string; angle: string; firstTask: string; reason: string; verdict: Verdict } {
   const t = text.toLowerCase();
-  let series: Series = "Standalone";
-  if (/café|cafe|matcha|food|eat|restaurant|bakery|pizza|omakase|review|verdict|taste/.test(t)) series = "I Only Have One Stomach";
-  else if (/itinerary|guide|pack|cost|transport|how to|day trip|tips|where to|plan/.test(t)) series = "Your Unpaid Tour Guide";
-  else if (/adventure|story|diary|memories|experience|skydiv|discover|camera roll/.test(t)) series = "Rolly Around the World";
+  const has = (name: string) => seriesList.includes(name);
+  let series: Series = seriesList.find((s) => s !== "Standalone") ?? seriesList[0] ?? "Standalone";
+
+  // Travel series matching
+  if (has("I Only Have One Stomach") && /café|cafe|matcha|food|eat|restaurant|bakery|pizza|omakase|review|verdict|taste/.test(t)) series = "I Only Have One Stomach";
+  else if (has("Your Unpaid Tour Guide") && /itinerary|guide|pack|cost|transport|how to|day trip|tips|where to|plan/.test(t)) series = "Your Unpaid Tour Guide";
+  else if (has("Rolly Around the World") && /adventure|story|diary|memories|experience|skydiv|discover|camera roll/.test(t)) series = "Rolly Around the World";
+  // Cooking series matching
+  else if (has("Recipes") && /recipe|make|cook|dish|bake|ingredient|burger|pasta|how to make/.test(t)) series = "Recipes";
+  else if (has("Honest Kitchen Reviews") && /review|worth it|gadget|tool|test|verdict|try/.test(t)) series = "Honest Kitchen Reviews";
+  else if (has("Cook With Me") && /vlog|with me|day|morning|evening|routine/.test(t)) series = "Cook With Me";
 
   const title = text.trim().replace(/\s+/g, " ").slice(0, 70);
   const payoff = series === "I Only Have One Stomach" ? "Is it actually worth it — an honest verdict."
     : series === "Your Unpaid Tour Guide" ? "Everything a viewer needs to plan this themselves."
+    : series === "Recipes" ? "A dish worth saving and making."
+    : series === "Honest Kitchen Reviews" ? "Is it actually worth buying — an honest verdict."
     : "A personal, visual story worth remembering.";
   const angle = "Open on an interesting visual, then a conversational curiosity hook.";
   const firstTask = "Write the first hook line out loud, then pick the opening shot.";
@@ -23,12 +32,12 @@ function suggest(text: string): { title: string; series: Series; payoff: string;
 }
 
 export function QuickCapture({ onOpen }: { onOpen: (idea: Idea) => void }) {
-  const { update } = useStore();
+  const { data, update } = useStore();
   const { show } = useToast();
   const [text, setText] = useState("");
   const [preview, setPreview] = useState<ReturnType<typeof suggest> | null>(null);
 
-  const analyze = () => { if (text.trim()) setPreview(suggest(text)); };
+  const analyze = () => { if (text.trim()) setPreview(suggest(text, data.seriesList)); };
 
   const save = () => {
     if (!preview) return;
@@ -66,7 +75,7 @@ export function QuickCapture({ onOpen }: { onOpen: (idea: Idea) => void }) {
             <Field label="Title"><input value={preview.title} onChange={(e) => setPreview({ ...preview, title: e.target.value })} /></Field>
             <Field label="Series">
               <select value={preview.series} onChange={(e) => setPreview({ ...preview, series: e.target.value as Series })}>
-                {SERIES_LIST.map((s) => <option key={s}>{s}</option>)}
+                {data.seriesList.map((s) => <option key={s}>{s}</option>)}
               </select>
             </Field>
             <Field label="Viewer payoff"><input value={preview.payoff} onChange={(e) => setPreview({ ...preview, payoff: e.target.value })} /></Field>

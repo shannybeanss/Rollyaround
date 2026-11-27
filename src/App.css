@@ -144,3 +144,32 @@ table.rolly td { padding: 10px; border-bottom: 1px solid var(--border); }
 .select-bar .btn { border-color: rgba(255,255,255,.4); }
 .btn-danger-solid { background: var(--danger); color: #fff; border-color: var(--danger); }
 .btn-danger-solid:hover { background: #a93226; }
+
+/* Account switcher (two top-level accounts) */
+.account-switch {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.account-tab {
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink-soft);
+  padding: 9px 18px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all .15s;
+}
+.account-tab:hover { border-color: var(--accent); color: var(--ink); }
+.account-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: var(--shadow);
+}
+.account-emoji { font-size: 18px; }

@@ -13,6 +13,20 @@ import type { AppData } from "./types";
 
 function fresh(): AppData { return seedAppData(); }
 
+describe("Multi-account", () => {
+  it("seeds two accounts: travel (with bank) and cooking (empty, own series)", async () => {
+    const { seedMultiAccount } = await import("./seed/defaults");
+    const m = seedMultiAccount();
+    expect(m.accounts.map((a) => a.id)).toEqual(["rollyaround", "rollybelly"]);
+    const travel = m.accounts.find((a) => a.id === "rollyaround")!;
+    const cooking = m.accounts.find((a) => a.id === "rollybelly")!;
+    expect(travel.data.ideas.length).toBeGreaterThanOrEqual(90);
+    expect(cooking.data.ideas.length).toBe(0);
+    expect(cooking.data.seriesList).toContain("Recipes");
+    expect(travel.data.seriesList).toContain("Your Unpaid Tour Guide");
+  });
+});
+
 describe("Existing data", () => {
   it("loads the real idea bank (90+ cards, not demo)", () => {
     const d = fresh();

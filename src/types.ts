@@ -1,24 +1,47 @@
 // Rolly Around Studios — core data model
 
-export type Series =
-  | "I Only Have One Stomach"
-  | "Your Unpaid Tour Guide"
-  | "Rolly Around the World"
-  | "Standalone";
+// Series is now a free string so each account can define its own.
+// The known travel ones keep their short labels/colours; anything else
+// falls back to a neutral style. Each account also stores its own seriesList.
+export type Series = string;
 
-export const SERIES_LIST: Series[] = [
+export const TRAVEL_SERIES: string[] = [
   "I Only Have One Stomach",
   "Your Unpaid Tour Guide",
   "Rolly Around the World",
   "Standalone",
 ];
 
-export const SERIES_META: Record<Series, { short: string; cls: string; accent: string }> = {
+export const COOKING_SERIES: string[] = [
+  "Recipes",
+  "Cook With Me",
+  "Honest Kitchen Reviews",
+  "Standalone",
+];
+
+// Back-compat export (some modules import SERIES_LIST). Prefer account.seriesList.
+export const SERIES_LIST: string[] = TRAVEL_SERIES;
+
+const SERIES_STYLE: Record<string, { short: string; cls: string; accent: string }> = {
   "I Only Have One Stomach": { short: "One Stomach", cls: "series-stomach", accent: "var(--series-stomach)" },
   "Your Unpaid Tour Guide": { short: "Tour Guide", cls: "series-guide", accent: "var(--series-guide)" },
   "Rolly Around the World": { short: "Around the World", cls: "series-world", accent: "var(--series-world)" },
   "Standalone": { short: "Standalone", cls: "series-standalone", accent: "var(--series-standalone)" },
+  "Recipes": { short: "Recipes", cls: "series-stomach", accent: "var(--series-stomach)" },
+  "Cook With Me": { short: "Cook With Me", cls: "series-guide", accent: "var(--series-guide)" },
+  "Honest Kitchen Reviews": { short: "Kitchen Reviews", cls: "series-world", accent: "var(--series-world)" },
 };
+
+const FALLBACK_STYLE = { short: "", cls: "series-standalone", accent: "var(--series-standalone)" };
+
+// Proxy-like accessor so existing `SERIES_META[series]` calls keep working
+// for any string, with a graceful fallback for custom series.
+export const SERIES_META: Record<string, { short: string; cls: string; accent: string }> = new Proxy(SERIES_STYLE, {
+  get(target, prop: string) {
+    if (prop in target) return target[prop];
+    return { ...FALLBACK_STYLE, short: prop.length > 16 ? prop.slice(0, 15) + "…" : prop };
+  },
+});
 
 export type Platform = "TikTok" | "Instagram" | "Lemon8" | "Xiaohongshu" | "YouTube Shorts";
 export const PLATFORMS: Platform[] = ["TikTok", "Instagram", "Lemon8", "Xiaohongshu", "YouTube Shorts"];
@@ -273,9 +296,10 @@ export interface BrandDeal {
   isDemo: boolean;
 }
 
-// ---- The whole app state (persisted) ----
+// ---- One creator account's full state (per account: travel / cooking) ----
 export interface AppData {
   version: number;
+  seriesList: string[];        // this account's content series
   ideas: Idea[];
   scheduledTasks: ScheduledTask[];
   waiting: WaitingItem[];
@@ -284,10 +308,25 @@ export interface AppData {
   invoices: Invoice[];
   business: BusinessProfile;
   analytics: AnalyticsEntry[];
-  accounts: PlatformAccount[];
+  accounts: PlatformAccount[]; // social platform follower accounts
   templates: Template[];
   portfolio: PortfolioPiece[];
   profile: ProfileData;
   deals: BrandDeal[];
   settings: Settings;
+}
+
+// ---- A creator account (Rolly Around travel, Rolly Belly cooking) ----
+export interface CreatorAccount {
+  id: string;            // "rollyaround" | "rollybelly"
+  name: string;          // display name of the account
+  emoji: string;         // tab icon
+  data: AppData;         // everything scoped to this account
+}
+
+// ---- Top-level persisted state: multiple accounts ----
+export interface MultiAccountData {
+  schemaVersion: number;
+  activeAccountId: string;
+  accounts: CreatorAccount[];
 }

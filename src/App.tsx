@@ -23,7 +23,7 @@ type TabId =
   | "invoices" | "analytics" | "suggestions" | "templates" | "profile" | "deals";
 
 function Shell() {
-  const { data, exportData } = useStore();
+  const { data, multi, account, switchAccount, exportData } = useStore();
   const [tab, setTab] = useState<TabId>("today");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [openIdea, setOpenIdea] = useState<Idea | null>(null);
@@ -52,8 +52,8 @@ function Shell() {
         <div className="app-header-inner">
           <div className="brand-row">
             <div className="brand">
-              <h1><span className="brand-mark">R</span> Rolly Around Studios</h1>
-              <div className="sub">Private planner for @rollyaround · travel, food & experiences</div>
+              <h1><span className="brand-mark">R</span> Rolly Studios</h1>
+              <div className="sub">Private planner · {account.name}</div>
             </div>
             <div className="row gap-8">
               <span className={`badge ${canSave ? "badge-ready" : "badge-danger"}`} title="Where your data lives">
@@ -68,6 +68,18 @@ function Shell() {
               <button className="btn btn-sm btn-accent" onClick={exportData}>Export backup now</button>
             </div>
           )}
+
+          {/* Account switcher (two top-level accounts) */}
+          <div className="account-switch">
+            {multi.accounts.map((a) => (
+              <button key={a.id}
+                className={`account-tab ${a.id === account.id ? "active" : ""}`}
+                onClick={() => { switchAccount(a.id); setTab("today"); }}>
+                <span className="account-emoji">{a.emoji}</span> {a.name}
+              </button>
+            ))}
+          </div>
+
           <nav className="tabs">
             {tabs.map((t) => (
               <button key={t.id} className={`tab ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>{t.label}</button>
@@ -76,7 +88,7 @@ function Shell() {
         </div>
       </header>
 
-      <main className="app-main">
+      <main className="app-main" key={account.id}>
         {tab === "today" && <Today />}
         {tab === "ideas" && <Ideas />}
         {tab === "lineup" && <Lineup onOpenIdea={goIdea} />}

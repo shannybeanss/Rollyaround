@@ -5,6 +5,7 @@ import type {
   AppData, RateLine, Invoice, AnalyticsEntry, PlatformAccount,
   Template, PortfolioPiece, ProfileData, BusinessProfile, Settings,
 } from "../types";
+import { TRAVEL_SERIES, COOKING_SERIES } from "../types";
 import { seedIdeas } from "./ideas";
 
 const id = () => Math.random().toString(36).slice(2, 10);
@@ -107,14 +108,16 @@ const settings: Settings = {
   schedules: { morningBrief: false, weeklyAnalytics: false, brandInbox: false },
 };
 
+// ---- Rolly Around (travel) account data ----
 export function seedAppData(): AppData {
   return {
     version: 1,
+    seriesList: [...TRAVEL_SERIES],
     ideas: seedIdeas(),
     scheduledTasks: [],
     waiting: [],
     dailyUpdates: [],
-    rates,
+    rates: rates.map((r) => ({ ...r, id: id() })),
     invoices,
     business,
     analytics,
@@ -124,5 +127,74 @@ export function seedAppData(): AppData {
     profile,
     deals: [],
     settings,
+  };
+}
+
+// ---- Rolly Belly (cooking) account data — starts empty, own series ----
+export function seedCookingData(): AppData {
+  const cookingTemplates: Template[] = [
+    { id: id(), name: "Recipe (make-this)", series: "Recipes", isStarter: true,
+      openingShot: "The finished dish, close-up", hook: "“Save this — it's easier than it looks.”", structure: "Finished dish → ingredients → key steps → first bite", ending: "Taste reaction + save CTA" },
+    { id: id(), name: "Cook With Me vlog", series: "Cook With Me", isStarter: true,
+      hook: "Casual “come cook with me” open", structure: "Prep → cook → plate, calm voiceover", ending: "Sit down and eat" },
+    { id: id(), name: "Honest Kitchen Review", series: "Honest Kitchen Reviews", isStarter: true,
+      hook: "“Is this gadget/ingredient worth it?”", structure: "Unbox/try → test → honest verdict", ending: "Rating" },
+    { id: id(), name: "30-minute quick edit", isStarter: true,
+      structure: "Trim best 5 clips → one caption → one cover → post" },
+  ];
+  return {
+    version: 1,
+    seriesList: [...COOKING_SERIES],
+    ideas: [],
+    scheduledTasks: [],
+    waiting: [],
+    dailyUpdates: [],
+    rates: rates.map((r) => ({ ...r, id: id() })),
+    invoices: [],
+    business: {
+      creatorName: "Rolly Belly",
+      businessName: "Rolly Belly (edit me)",
+      email: "collabs@example.com",
+      address: "Singapore (edit me)",
+      paymentInstructions: "PayNow / bank details here (edit me)",
+    },
+    analytics: [],
+    accounts: [
+      { platform: "TikTok", followers: 0, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
+      { platform: "Instagram", followers: 0, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
+      { platform: "Lemon8", followers: 0, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
+      { platform: "Xiaohongshu", followers: 0, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
+      { platform: "YouTube Shorts", followers: 0, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
+    ],
+    templates: cookingTemplates,
+    portfolio: [],
+    profile: {
+      displayName: "Rolly Belly",
+      intro: "Hi, I'm Rolly Belly — my cooking corner. Recipes, cook-with-me vlogs and honest kitchen reviews. Edit this intro anytime.",
+      contactEmail: "collabs@example.com",
+      languages: "English and Mandarin",
+      tags: ["Cooking", "Recipes", "Food", "Kitchen"],
+      links: [
+        { platform: "TikTok", handle: "@rollybelly", url: "https://www.tiktok.com/@rollybelly" },
+        { platform: "Instagram", handle: "@rollybelly", url: "https://www.instagram.com/rollybelly" },
+        { platform: "Lemon8", handle: "@rollybelly", url: "" },
+        { platform: "Xiaohongshu", handle: "rollybelly", url: "" },
+        { platform: "YouTube Shorts", handle: "@rollybelly", url: "" },
+      ],
+    },
+    deals: [],
+    settings: { ...settings },
+  };
+}
+
+// ---- Top-level multi-account seed ----
+export function seedMultiAccount(): import("../types").MultiAccountData {
+  return {
+    schemaVersion: 2,
+    activeAccountId: "rollyaround",
+    accounts: [
+      { id: "rollyaround", name: "Rolly Around", emoji: "🌍", data: seedAppData() },
+      { id: "rollybelly", name: "Rolly Belly", emoji: "🍳", data: seedCookingData() },
+    ],
   };
 }
