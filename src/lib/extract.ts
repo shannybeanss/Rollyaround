@@ -40,6 +40,22 @@ export function extractChanges(transcript: string, data: AppData): ProposedChang
   if (!text) return out;
   const lower = text.toLowerCase();
 
+  // Your plan for today: "today I'll / I'm going to / I plan to / I want to [do X]"
+  const planMatch = text.match(/\b(?:today i(?:'| a)m going to|today i(?:'ll| will)|i(?:'| a)m going to|i plan to|my plan is to|i want to)\s+(.{4,90})/i);
+  if (planMatch) {
+    const planText = planMatch[1].replace(/[.;].*$/, "").trim();
+    const matchesForPlan = matchIdea(planText, data.ideas);
+    out.push({
+      id: uid(), kind: "schedule", confidence: "clear",
+      ideaId: matchesForPlan[0]?.id,
+      label: `Set today's focus: "${planText}"`,
+      detail: "This becomes the top line of your brief.",
+      apply: (d) => {
+        d.todayPlan = { date: new Date().toISOString().slice(0, 10), text: planText, ideaId: matchesForPlan[0]?.id };
+      },
+    });
+  }
+
   // Minutes available
   const timeMatch = lower.match(/(\d{1,3})\s*(min|mins|minutes)/);
   if (timeMatch) {

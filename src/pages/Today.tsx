@@ -15,6 +15,16 @@ export function Today() {
   const brief = useMemo(() => buildBrief(data), [data]);
 
   const [newWaiting, setNewWaiting] = useState("");
+  const [planText, setPlanText] = useState(
+    data.todayPlan?.date === todaySGT() ? data.todayPlan.text : ""
+  );
+
+  const savePlan = () => {
+    const text = planText.trim();
+    update((d) => { d.todayPlan = text ? { date: todaySGT(), text } : undefined; return d; });
+    show(text ? "Today's focus set — it leads your brief" : "Focus cleared");
+  };
+  const clearPlan = () => { setPlanText(""); update((d) => { d.todayPlan = undefined; return d; }); show("Focus cleared — back to suggestions"); };
 
   const toggleWaiting = (id: string) =>
     update((d) => { const w = d.waiting.find((x) => x.id === id); if (w) w.done = !w.done; return d; });
@@ -53,18 +63,42 @@ export function Today() {
           <span className="tiny muted">Brief for {fmtSGT(todaySGT())} · Singapore time</span>
         </div>
 
+        {/* Today's focus — your own plan leads the brief */}
+        <div className="card card-pad" style={{ background: "var(--accent-soft)", border: "1px solid var(--accent)", marginBottom: 14 }}>
+          <label>✍️ Today's focus <span className="tiny muted">— set your own plan; it leads the brief</span></label>
+          <div className="row gap-8 wrap">
+            <input className="grow" style={{ minWidth: 220 }} placeholder='e.g. "Edit the matcha café review and pick a cover"'
+                   value={planText} onChange={(e) => setPlanText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && savePlan()} />
+            <button className="btn btn-accent" onClick={savePlan}>Set focus</button>
+            {brief.myPlan && <button className="btn btn-ghost" onClick={clearPlan}>Clear</button>}
+          </div>
+        </div>
+
         <div className="stack gap-12" style={{ marginTop: 10 }}>
-          <BriefLine label="Work on first">
-            {brief.firstThing ? (
-              <><b>{brief.firstThing.text}.</b> <span className="muted">{brief.firstThing.reason}</span></>
-            ) : <span className="muted">Nothing blocking — pick a Try idea from your bank to start a quick win.</span>}
-          </BriefLine>
+          {brief.myPlan ? (
+            <>
+              <BriefLine label="Your plan">
+                <b style={{ color: "var(--accent-ink)" }}>{brief.myPlan.text}</b>
+              </BriefLine>
+              {brief.firstThing && (
+                <BriefLine label="If spare time">
+                  <span className="muted">{brief.firstThing.text} — {brief.firstThing.reason}</span>
+                </BriefLine>
+              )}
+            </>
+          ) : (
+            <BriefLine label="Work on first">
+              {brief.firstThing ? (
+                <><b>{brief.firstThing.text}.</b> <span className="muted">{brief.firstThing.reason}</span> <span className="tiny faint">(suggested — set your own focus above to override)</span></>
+              ) : <span className="muted">Nothing blocking — set your focus above, or pick a Try idea to start a quick win.</span>}
+            </BriefLine>
+          )}
 
           <BriefLine label="Clear next">
             {brief.clearNext ? <b>{brief.clearNext.text}</b> : <span className="muted">Backlog is clear of unqueued Try ideas.</span>}
           </BriefLine>
 
-          <BriefLine label="This week ({brief.thisWeek.length})">
+          <BriefLine label={`This week (${brief.thisWeek.length})`}>
             {brief.thisWeek.length ? (
               <ul style={{ margin: 0, paddingLeft: 18 }}>
                 {brief.thisWeek.map(({ idea, lastStop }) => (

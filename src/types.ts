@@ -296,10 +296,18 @@ export interface BrandDeal {
   isDemo: boolean;
 }
 
+// Your own stated plan (overrides the suggested "first thing").
+export interface TodayPlan {
+  date: string;        // ISO date (SGT) the plan was set for
+  text: string;        // what you decided to focus on
+  ideaId?: string;     // optional link to a piece
+}
+
 // ---- One creator account's full state (per account: travel / cooking) ----
 export interface AppData {
   version: number;
   seriesList: string[];        // this account's content series
+  todayPlan?: TodayPlan;       // your own focus for today (beats the suggestion)
   ideas: Idea[];
   scheduledTasks: ScheduledTask[];
   waiting: WaitingItem[];

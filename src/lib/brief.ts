@@ -7,7 +7,9 @@ import { isOverdue, daysLate, invoiceTotal, money, realInvoices, todaySGT, weekl
 
 export interface Brief {
   greeting: string;
+  myPlan: { text: string; ideaId?: string } | null;   // your own stated focus
   firstThing: { text: string; reason: string; ideaId?: string } | null;
+  firstThingIsSuggestion: boolean;  // true = app guessed; false = your plan
   clearNext: { text: string; ideaId?: string } | null;
   thisWeek: { idea: Idea; lastStop: string }[];
   dueToday: string[];
@@ -32,6 +34,11 @@ export function buildBrief(data: AppData): Brief {
   const inProgress = data.ideas.filter(
     (i) => !i.isDemo && ["Script", "Edit", "Ready", "Scheduled"].includes(i.stage)
   );
+
+  // Your own plan, if you set one for today — this leads the brief.
+  const myPlan = (data.todayPlan && data.todayPlan.date === today && data.todayPlan.text.trim())
+    ? { text: data.todayPlan.text.trim(), ideaId: data.todayPlan.ideaId }
+    : null;
 
   // First thing: prefer a Ready piece missing a cover/next waiting item,
   // else the nearest-to-done in-progress piece.
@@ -102,7 +109,9 @@ export function buildBrief(data: AppData): Brief {
 
   return {
     greeting,
+    myPlan,
     firstThing,
+    firstThingIsSuggestion: !myPlan,  // if you set a plan, the "first thing" is just a backup suggestion
     clearNext,
     thisWeek,
     dueToday,
