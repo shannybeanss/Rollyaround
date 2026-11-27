@@ -3,10 +3,12 @@ import { useStore } from "../store";
 import { useToast } from "../components/Toast";
 
 export function Settings({ onClose }: { onClose: () => void }) {
-  const { data, update, exportData, importData, reset } = useStore();
+  const { data, update, exportData, importData, reset, history, snapshot, restoreSnapshot, deleteSnapshot } = useStore();
   const { show } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const s = data.settings;
+
+  const fmtWhen = (iso: string) => new Date(iso).toLocaleString("en-SG", { timeZone: "Asia/Singapore", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
   const setS = (patch: Partial<typeof s>) => update((d) => { d.settings = { ...d.settings, ...patch }; return d; });
 
@@ -28,8 +30,32 @@ export function Settings({ onClose }: { onClose: () => void }) {
             <div className="row gap-8 wrap" style={{ marginTop: 10 }}>
               <button className="btn btn-sm" onClick={exportData}>Export backup</button>
               <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>Import backup</button>
+              <button className="btn btn-sm" onClick={() => { snapshot("Manual save"); show("Snapshot saved to history"); }}>Save a snapshot now</button>
               <input ref={fileRef} type="file" accept="application/json" hidden onChange={(e) => e.target.files?.[0] && doImport(e.target.files[0])} />
             </div>
+          </div>
+
+          <div className="card card-pad">
+            <b>Backups &amp; history</b>
+            <p className="tiny muted" style={{ marginTop: 4 }}>A snapshot is saved automatically before any reset or import. Restore any version with one tap — restoring also snapshots your current data first, so you can always go back.</p>
+            {history.length === 0 ? (
+              <p className="tiny muted" style={{ marginTop: 8 }}>No snapshots yet. One is created the next time you reset or import, or tap “Save a snapshot now” above.</p>
+            ) : (
+              <div className="stack gap-8" style={{ marginTop: 10 }}>
+                {history.map((snap) => (
+                  <div key={snap.id} className="row between wrap" style={{ padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
+                    <div>
+                      <div className="row gap-8"><b className="tiny">{snap.reason}</b><span className="badge badge-idea">{snap.ideaCount} ideas</span></div>
+                      <div className="tiny muted">{fmtWhen(snap.at)} · Singapore time</div>
+                    </div>
+                    <div className="row gap-6">
+                      <button className="btn btn-sm btn-accent" onClick={() => { if (confirm(`Restore this version from ${fmtWhen(snap.at)}? Your current data will be snapshotted first.`)) { restoreSnapshot(snap.id); show("Restored — your previous data is now active"); } }}>Restore</button>
+                      <button className="btn btn-sm btn-ghost" onClick={() => deleteSnapshot(snap.id)}>✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid-2" style={{ gap: 12 }}>
