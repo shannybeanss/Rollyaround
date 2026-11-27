@@ -24,6 +24,14 @@ interface SeedSpec {
   verifyBeforeLineup?: boolean;
   verdict?: Idea["verdict"];
   notes?: string;
+  hooks?: string[];
+  payoff?: string;
+  angle?: string;
+  firstTask?: string;
+  storyboard?: Array<{ shot: string; voiceover: string; footage: "Have" | "Need" | "Optional" }>;
+  coverText?: string;
+  captionTikTok?: string;
+  stage?: Idea["stage"];
 }
 
 const now = new Date().toISOString();
@@ -36,14 +44,25 @@ function make(spec: SeedSpec): Idea {
     destination: spec.destination,
     rollyRating: spec.rollyRating,
     isDemo: false,
-    hooks: [],
+    payoff: spec.payoff,
+    angle: spec.angle,
+    firstTask: spec.firstTask,
+    hooks: spec.hooks ?? [],
     references: [],
     notes: spec.notes,
     verdict: spec.verdict,
     verifyBeforeLineup: spec.verifyBeforeLineup,
-    stage: "Idea",
+    stage: spec.stage ?? "Idea",
     platforms: emptyPlatforms(),
     checklist: [],
+    storyboard: spec.storyboard?.map((beat, i) => ({
+      id: `${pid()}-${i}`,
+      shot: beat.shot,
+      voiceover: beat.voiceover,
+      footage: beat.footage,
+    })),
+    coverText: spec.coverText,
+    captionTikTok: spec.captionTikTok,
     createdAt: now,
     updatedAt: now,
   };
@@ -59,7 +78,13 @@ const specs: SeedSpec[] = [
   { title: "Huge salmon bibimbap café review (truffle cream pasta + strawberry matcha)", series: S, destination: "JB", rollyRating: true },
   { title: "Niko Niko Onigiri verdict", series: S, destination: "JB", rollyRating: true },
   { title: "Starter Café and Chill Chow food stops", series: S, destination: "JB" },
-  { title: "Tsujiri Premium matcha", series: S, destination: "Singapore", rollyRating: true },
+  { title: "Tsujiri Premium matcha", series: S, destination: "Singapore", rollyRating: true, verdict: "Try", hooks: ["Is this actually worth it?"], payoff: "A clear yes/no matcha verdict", angle: "Close-up first sip, then price, then Rolly Rating", firstTask: "Cut the best 5 clips, 90 min max", storyboard: [
+    { shot: "Pour / first sip close-up", voiceover: "Is this actually worth it?", footage: "Need" },
+    { shot: "Wide shot — why you came", voiceover: "I came here for the premium matcha", footage: "Need" },
+    { shot: "First sip reaction", voiceover: "First sip — honest reaction", footage: "Need" },
+    { shot: "Price on screen", voiceover: "Here's what it cost", footage: "Need" },
+    { shot: "Rolly Rating verdict card", voiceover: "My Rolly Rating verdict", footage: "Need" },
+  ] },
   { title: "Gotcha Matcha", series: S, destination: "Singapore", rollyRating: true },
   { title: "Rise Bakehouse", series: S, destination: "Singapore", rollyRating: true },
   { title: "Fortuna Pizza", series: S, destination: "Singapore", rollyRating: true },
@@ -115,6 +140,14 @@ const specs: SeedSpec[] = [
   { title: "Kamakura day trip", series: G, destination: "Japan" },
   { title: "Lake Kawaguchi day trip", series: G, destination: "Japan" },
   { title: "Phu Quoc travel ideas", series: G, destination: "Vietnam" },
+  { title: "$8 Vietnam hair wash", series: G, destination: "Ho Chi Minh City", rollyRating: true, verdict: "Try", hooks: ["$8 hair wash in Vietnam?!", "Best $8 I spent in Vietnam", "Save this for Ho Chi Minh City"], payoff: "A specific cheap, saveable HCMC tip people can use", angle: "Hook, then 1.5s series intro, then the hack/tip", firstTask: "Confirm place name, $8 currency, and what the $8 includes", notes: "Likely Hamie Hair Spa, Ho Chi Minh City — confirm place, price currency, and inclusions before posting. Do not invent these.", storyboard: [
+    { shot: "Close-up of the hair wash / water running through hair", voiceover: "$8 hair wash in Vietnam?!", footage: "Need" },
+    { shot: "Series intro title sting — 'Unpaid tour guide', 1.5s max", voiceover: "Unpaid tour guide", footage: "Have" },
+    { shot: "Place name and $8 price on screen", voiceover: "Where it is and what it costs", footage: "Need" },
+    { shot: "What happens — wash, head massage, blow-dry", voiceover: "What you get for $8 and how long it takes", footage: "Need" },
+    { shot: "The tip — walk-in or book ahead, what to ask for", voiceover: "The tip: walk-in or book ahead?", footage: "Need" },
+    { shot: "End card — verdict and save CTA", voiceover: "Save this for HCMC — would I go back?", footage: "Need" },
+  ] },
   { title: "Travel Costs Unpacked", series: G, destination: "Travel costs" },
 
   // ---------- Rolly Around the World ----------
@@ -141,7 +174,7 @@ const specs: SeedSpec[] = [
   { title: "Running around Greece like we're in a film", series: W, destination: "Greece" },
   { title: "Japan photo diary", series: W, destination: "Japan" },
   { title: "2026 travel recap", series: W, destination: "Travel recap" },
-  { title: "11 destinations in one travel recap", series: W, destination: "Travel recap" },
+  { title: "11 destinations in one travel recap", series: W, destination: "Travel recap", stage: "Edit", hooks: ["11 destinations in 2026. how much did I spend getting there?", "11 places in 2026 — here's what it cost me"], payoff: "A saveable 2026 travel recap with real spend", firstTask: "Lock the 11 places in order and the total spend", coverText: "11 destinations in 2026. how much did I spend getting there?" },
 
   // ---------- Standalone ----------
   { title: "Dog studio photoshoot with the final photos reveal", series: A, rollyRating: true },
