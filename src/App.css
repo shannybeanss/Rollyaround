@@ -132,3 +132,15 @@ table.rolly td { padding: 10px; border-bottom: 1px solid var(--border); }
   .modal { box-shadow: none; max-width: 100%; }
   body { background: #fff; }
 }
+
+/* Multi-select + mass delete */
+.selected-card { outline: 2px solid var(--accent); outline-offset: 1px; background: var(--accent-soft); }
+.select-bar {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px;
+  box-shadow: var(--shadow-lg); z-index: 55; display: flex; align-items: center; gap: 12px;
+  font-size: 14px; max-width: 92vw;
+}
+.select-bar .btn { border-color: rgba(255,255,255,.4); }
+.btn-danger-solid { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn-danger-solid:hover { background: #a93226; }

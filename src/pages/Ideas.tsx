@@ -17,6 +17,8 @@ export function Ideas() {
   const [stageFilter, setStageFilter] = useState<FilterStage>("all");
   const [editing, setEditing] = useState<Idea | null>(null);
   const [logging, setLogging] = useState<Idea | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const destinations = useMemo(
     () => Array.from(new Set(data.ideas.map((i) => i.destination).filter(Boolean))) as string[],
@@ -61,6 +63,31 @@ export function Ideas() {
     });
   };
 
+  const selectedIds = Object.keys(selected).filter((id) => selected[id]);
+  const toggleSelect = (id: string) => setSelected((p) => ({ ...p, [id]: !p[id] }));
+  const selectAllShown = () => setSelected(Object.fromEntries(filtered.map((i) => [i.id, true])));
+  const clearSelection = () => setSelected({});
+  const exitSelectMode = () => { setSelectMode(false); clearSelection(); };
+
+  const deleteSelected = () => {
+    const ids = new Set(selectedIds);
+    if (ids.size === 0) return;
+    if (!confirm(`Delete ${ids.size} idea${ids.size === 1 ? "" : "s"}? This also removes their scheduled tasks.`)) return;
+    const removedIdeas = data.ideas.filter((i) => ids.has(i.id)).map((i) => structuredClone(i));
+    const removedTasks = data.scheduledTasks.filter((t) => ids.has(t.ideaId));
+    update((d) => {
+      d.ideas = d.ideas.filter((i) => !ids.has(i.id));
+      d.scheduledTasks = d.scheduledTasks.filter((t) => !ids.has(t.ideaId));
+      d.waiting = d.waiting.filter((w) => !w.ideaId || !ids.has(w.ideaId));
+      return d;
+    });
+    exitSelectMode();
+    show(`Deleted ${removedIdeas.length} idea${removedIdeas.length === 1 ? "" : "s"}`, () => {
+      update((d) => { d.ideas.unshift(...removedIdeas); d.scheduledTasks.push(...removedTasks); return d; });
+      show("Restored");
+    });
+  };
+
   return (
     <div>
       <div className="agent-note">
@@ -92,11 +119,30 @@ export function Ideas() {
         </select>
       </div>
 
-      <p className="tiny muted" style={{ marginBottom: 10 }}>{filtered.length} shown</p>
+      <div className="row between wrap" style={{ marginBottom: 10 }}>
+        <p className="tiny muted" style={{ margin: 0 }}>{filtered.length} shown{selectMode && selectedIds.length > 0 ? ` · ${selectedIds.length} selected` : ""}</p>
+        {!selectMode ? (
+          <button className="btn btn-sm" onClick={() => setSelectMode(true)}>Select</button>
+        ) : (
+          <div className="row gap-8 wrap">
+            <button className="btn btn-sm" onClick={selectAllShown}>Select all shown</button>
+            <button className="btn btn-sm" onClick={clearSelection}>Clear</button>
+            <button className="btn btn-sm btn-ghost" onClick={exitSelectMode}>Done</button>
+          </div>
+        )}
+      </div>
 
       <div className="grid-auto">
         {filtered.map((idea) => (
-          <div key={idea.id} className="card card-pad idea-card">
+          <div key={idea.id} className={`card card-pad idea-card ${selectMode && selected[idea.id] ? "selected-card" : ""}`}
+               onClick={selectMode ? () => toggleSelect(idea.id) : undefined}
+               style={selectMode ? { cursor: "pointer" } : undefined}>
+            {selectMode && (
+              <label className="row gap-8" style={{ margin: 0 }} onClick={(e) => e.stopPropagation()}>
+                <input type="checkbox" style={{ width: 18, height: 18 }} checked={!!selected[idea.id]} onChange={() => toggleSelect(idea.id)} />
+                <span className="tiny muted">Select</span>
+              </label>
+            )}
             <div className="idea-badges">
               <StageBadge stage={idea.stage} />
               {activePlatforms(idea).map(({ platform, state }) => (
@@ -113,6 +159,7 @@ export function Ideas() {
               {idea.destination && <span className="tiny muted">📍 {idea.destination}</span>}
             </div>
             {idea.notes && <p className="tiny muted">{idea.notes}</p>}
+            {!selectMode && (
             <div className="row gap-8 wrap" style={{ marginTop: "auto", paddingTop: 6 }}>
               <button className="btn btn-sm" onClick={() => setEditing(idea)}>Open</button>
               {idea.stage !== "Ready" && idea.stage !== "Posted" && (
@@ -121,9 +168,19 @@ export function Ideas() {
               <button className="btn btn-sm" onClick={() => setLogging(idea)}>Log published</button>
               <button className="btn btn-sm btn-ghost" style={{ color: "var(--danger)", marginLeft: "auto" }} onClick={() => deleteIdea(idea)} title="Delete idea">🗑 Delete</button>
             </div>
+            )}
           </div>
         ))}
       </div>
+
+      {/* Sticky mass-delete bar */}
+      {selectMode && (
+        <div className="select-bar">
+          <span>{selectedIds.length} selected</span>
+          <button className="btn btn-sm" onClick={exitSelectMode}>Cancel</button>
+          <button className="btn btn-sm btn-danger-solid" disabled={selectedIds.length === 0} onClick={deleteSelected}>🗑 Delete selected</button>
+        </div>
+      )}
 
       {editing && <IdeaModal idea={editing} onClose={() => setEditing(null)} />}
       {logging && <LogPublished idea={logging} onClose={() => setLogging(null)} />}
