@@ -15,6 +15,7 @@ export function Today() {
   const brief = useMemo(() => buildBrief(data), [data]);
 
   const [newWaiting, setNewWaiting] = useState("");
+  const [addingKind, setAddingKind] = useState<TaskKind | null>(null);
   const [planText, setPlanText] = useState(
     data.todayPlan?.date === todaySGT() ? data.todayPlan.text : ""
   );
@@ -138,7 +139,10 @@ export function Today() {
           const items = checklistByKind(kind);
           return (
             <div key={kind} className="card card-pad">
-              <h3 style={{ fontSize: 15, marginBottom: 8 }}>{kind}</h3>
+              <div className="row between" style={{ marginBottom: 8 }}>
+                <h3 style={{ fontSize: 15 }}>{kind}</h3>
+                <button className="btn btn-sm btn-ghost" onClick={() => setAddingKind(kind)}>+ Add</button>
+              </div>
               {items.length === 0 && <p className="tiny muted">No {kind.toLowerCase()} tasks queued.</p>}
               {items.map(({ task, idea }) => (
                 <div key={task.id} className={`checkitem ${task.done ? "done" : ""}`}>
@@ -150,6 +154,8 @@ export function Today() {
           );
         })}
       </div>
+
+      {addingKind && <AddTodayTask kind={addingKind} onClose={() => setAddingKind(null)} />}
 
       {/* Waiting on you */}
       <div style={{ marginTop: 20 }}>
@@ -183,6 +189,59 @@ function BriefLine({ label, children }: { label: string; children: React.ReactNo
     <div style={{ display: "flex", gap: 12, alignItems: "baseline", flexWrap: "wrap" }}>
       <span className="tiny muted" style={{ minWidth: 92, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".03em" }}>{label}</span>
       <span className="grow" style={{ minWidth: 200 }}>{children}</span>
+    </div>
+  );
+}
+
+// Quick-add a task straight from the Today tab (links to a piece, or a free-text one-off).
+function AddTodayTask({ kind, onClose }: { kind: TaskKind; onClose: () => void }) {
+  const { data, update } = useStore();
+  const { show } = useToast();
+  const [ideaId, setIdeaId] = useState("");
+  const [freeText, setFreeText] = useState("");
+  const [date, setDate] = useState(todaySGT());
+  const pieces = data.ideas.filter((i) => !i.isDemo && i.stage !== "Posted");
+
+  const add = () => {
+    if (!ideaId && !freeText.trim()) { show("Pick a piece or type a task."); return; }
+    update((d) => {
+      let targetId = ideaId;
+      // If they typed a free-text task with no piece, create a lightweight idea to attach it to.
+      if (!targetId && freeText.trim()) {
+        targetId = uid();
+        d.ideas.unshift({
+          id: targetId, title: freeText.trim(), series: d.seriesList[0] ?? "Standalone", isDemo: false,
+          hooks: [], references: [], stage: "Idea",
+          platforms: { TikTok:{status:"none"}, Instagram:{status:"none"}, Lemon8:{status:"none"}, Xiaohongshu:{status:"none"}, "YouTube Shorts":{status:"none"} },
+          checklist: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        });
+      }
+      d.scheduledTasks.push({ id: uid(), ideaId: targetId, kind, date, done: false });
+      return d;
+    });
+    show(`Added a ${kind} task`);
+    onClose();
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head"><h3>Add a {kind} task</h3><button className="btn btn-ghost" onClick={onClose}>✕</button></div>
+        <div className="modal-body">
+          <div><label>For which piece?</label>
+            <select value={ideaId} onChange={(e) => setIdeaId(e.target.value)}>
+              <option value="">— or type a new task below —</option>
+              {pieces.map((i) => <option key={i.id} value={i.id}>{i.title}</option>)}
+            </select>
+          </div>
+          {!ideaId && (
+            <div><label>New task</label><input placeholder={`e.g. "${kind === "Film" ? "Film the matcha café" : kind === "Edit" ? "Edit the JB review" : kind === "Plan" ? "Plan the packing carousel" : "Post the café guide"}"`} value={freeText} onChange={(e) => setFreeText(e.target.value)} /></div>
+          )}
+          <div><label>Date (Singapore time)</label><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+          <p className="tiny muted">It'll appear in this {kind} box and on your Lineup timeline.</p>
+        </div>
+        <div className="modal-foot"><button className="btn btn-ghost" onClick={onClose}>Cancel</button><button className="btn btn-accent" onClick={add}>Add task</button></div>
+      </div>
     </div>
   );
 }

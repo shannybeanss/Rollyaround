@@ -23,7 +23,7 @@ type TabId =
   | "invoices" | "analytics" | "suggestions" | "templates" | "profile" | "deals";
 
 function Shell() {
-  const { data, multi, account, switchAccount, exportData } = useStore();
+  const { data, multi, account, switchAccount, exportData, saveState } = useStore();
   const [tab, setTab] = useState<TabId>("today");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [openIdea, setOpenIdea] = useState<Idea | null>(null);
@@ -56,9 +56,13 @@ function Shell() {
               <div className="sub">Private planner · {account.name}</div>
             </div>
             <div className="row gap-8">
-              <span className={`badge ${canSave ? "badge-ready" : "badge-danger"}`} title="Where your data lives">
-                {canSave ? "Saved in this browser" : "Saving blocked — export backups"}
-              </span>
+              {canSave ? (
+                <span className={`save-pill ${saveState}`} title="Every change saves automatically to this browser">
+                  {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : "Auto-save on"}
+                </span>
+              ) : (
+                <span className="badge badge-danger" title="Where your data lives">Saving blocked — export backups</span>
+              )}
               <button className="btn btn-sm" onClick={() => setSettingsOpen(true)}>⚙ Settings</button>
             </div>
           </div>

@@ -173,3 +173,14 @@ table.rolly td { padding: 10px; border-bottom: 1px solid var(--border); }
   box-shadow: var(--shadow);
 }
 .account-emoji { font-size: 18px; }
+
+/* Auto-save indicator */
+.save-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 650;
+  background: var(--surface-2); color: var(--ink-soft);
+  transition: background .2s, color .2s;
+}
+.save-pill.saving { background: var(--status-progress-bg); color: var(--status-progress); }
+.save-pill.saved { background: var(--status-ready-bg); color: var(--status-ready); }

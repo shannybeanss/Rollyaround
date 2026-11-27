@@ -87,6 +87,7 @@ interface StoreCtx {
   multi: MultiAccountData;
   account: CreatorAccount;
   data: AppData;                                   // active account's data
+  saveState: "idle" | "saving" | "saved";
   update: (fn: (draft: AppData) => AppData) => void; // edits active account
   switchAccount: (id: string) => void;
   renameSeriesList: (list: string[]) => void;
@@ -104,12 +105,21 @@ const Ctx = createContext<StoreCtx | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [multi, setMulti] = useState<MultiAccountData>(() => load());
   const [history, setHistory] = useState<Snapshot[]>(() => loadHistory());
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const saveTimer = useRef<number | null>(null);
+  const savedTimer = useRef<number | null>(null);
+  const firstRun = useRef(true);
 
   useEffect(() => {
+    // Don't flash "saving" on the very first load.
+    if (firstRun.current) { firstRun.current = false; return; }
+    setSaveState("saving");
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(multi)); } catch { /* ignore */ }
+      setSaveState("saved");
+      if (savedTimer.current) window.clearTimeout(savedTimer.current);
+      savedTimer.current = window.setTimeout(() => setSaveState("idle"), 1500);
     }, 250);
     return () => { if (saveTimer.current) window.clearTimeout(saveTimer.current); };
   }, [multi]);
@@ -184,7 +194,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ multi, account, data, update, switchAccount, renameSeriesList, reset, exportData, importData, history, snapshot, restoreSnapshot, deleteSnapshot }}>
+    <Ctx.Provider value={{ multi, account, data, saveState, update, switchAccount, renameSeriesList, reset, exportData, importData, history, snapshot, restoreSnapshot, deleteSnapshot }}>
       {children}
     </Ctx.Provider>
   );
