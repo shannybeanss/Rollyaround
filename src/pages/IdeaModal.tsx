@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useStore } from "../store";
 import { useToast } from "../components/Toast";
-import { SERIES_LIST, type Idea, type Series, type Verdict, type ProductionStage, type Platform, PLATFORMS } from "../types";
+import { SERIES_LIST, type Idea, type Series, type Verdict, type ProductionStage, type Platform, type FootageStatus, PLATFORMS } from "../types";
 import { uid } from "../lib/helpers";
+import { starterStoryboard } from "../lib/storyboard";
 
 const STAGES: ProductionStage[] = ["Idea", "Script", "Edit", "Ready", "Scheduled", "Posted"];
 
@@ -105,6 +106,47 @@ export function IdeaModal({ idea, onClose }: { idea: Idea; onClose: () => void }
                 <button className="btn btn-sm" onClick={() => { if (refLink.trim()) { set("references", [...draft.references, { id: uid(), link: refLink.trim(), learn: refLearn.trim() }]); setRefLink(""); setRefLearn(""); } }}>Add</button>
               </div>
             </div>
+          </div>
+
+          {/* Storyboard */}
+          <div>
+            <div className="row between">
+              <label style={{ margin: 0 }}>🎬 Storyboard <span className="tiny muted">— shot by shot</span></label>
+              {(!draft.storyboard || draft.storyboard.length === 0) && (
+                <button className="btn btn-sm btn-accent" onClick={() => set("storyboard", starterStoryboard(draft.series))}>Start from {draft.series.split(" ").slice(-1)[0]} template</button>
+              )}
+            </div>
+            {draft.storyboard && draft.storyboard.length > 0 && (
+              <div className="stack gap-8" style={{ marginTop: 8 }}>
+                {draft.storyboard.map((b, i) => (
+                  <div key={b.id} className="card card-pad" style={{ background: "var(--surface-2)" }}>
+                    <div className="row between">
+                      <b className="tiny">Beat {i + 1}</b>
+                      <div className="row gap-6">
+                        <select style={{ width: "auto" }} value={b.footage} onChange={(e) => { const sb = [...draft.storyboard!]; sb[i] = { ...b, footage: e.target.value as FootageStatus }; set("storyboard", sb); }}>
+                          <option>Have</option><option>Need</option><option>Optional</option>
+                        </select>
+                        <button className="btn btn-sm btn-ghost" onClick={() => set("storyboard", draft.storyboard!.filter((_, x) => x !== i))}>✕</button>
+                      </div>
+                    </div>
+                    <label style={{ marginTop: 6 }}>Shot / visual</label>
+                    <input value={b.shot} onChange={(e) => { const sb = [...draft.storyboard!]; sb[i] = { ...b, shot: e.target.value }; set("storyboard", sb); }} />
+                    <label style={{ marginTop: 6 }}>Voiceover / on-screen text</label>
+                    <textarea rows={2} value={b.voiceover} onChange={(e) => { const sb = [...draft.storyboard!]; sb[i] = { ...b, voiceover: e.target.value }; set("storyboard", sb); }} />
+                  </div>
+                ))}
+                <button className="btn btn-sm" onClick={() => set("storyboard", [...(draft.storyboard ?? []), { id: uid(), shot: "", voiceover: "", footage: "Need" }])}>+ Add beat</button>
+              </div>
+            )}
+          </div>
+
+          {/* Cover + captions */}
+          <div className="grid-2" style={{ gap: 12 }}>
+            <div><label>Cover text</label><input value={draft.coverText ?? ""} onChange={(e) => set("coverText", e.target.value)} /></div>
+          </div>
+          <div className="grid-2" style={{ gap: 12 }}>
+            <div><label>Instagram caption</label><textarea rows={2} value={draft.captionIG ?? ""} onChange={(e) => set("captionIG", e.target.value)} /></div>
+            <div><label>TikTok caption</label><textarea rows={2} value={draft.captionTikTok ?? ""} onChange={(e) => set("captionTikTok", e.target.value)} /></div>
           </div>
 
           {/* Per-platform status */}

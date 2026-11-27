@@ -47,6 +47,15 @@ export interface ReferenceVideo {
   learn: string; // what I want to learn from it (opening shot, reveal, etc.)
 }
 
+// One beat in a storyboard: a shot + what you say + whether you have the footage
+export type FootageStatus = "Have" | "Need" | "Optional";
+export interface StoryboardBeat {
+  id: string;
+  shot: string;        // the visual on screen
+  voiceover: string;   // what you say / on-screen text
+  footage: FootageStatus;
+}
+
 export interface Idea {
   id: string;
   title: string;
@@ -72,6 +81,10 @@ export interface Idea {
   stage: ProductionStage;
   platforms: Record<Platform, PlatformState>;
   checklist: ChecklistItem[]; // plan/film/edit/post tasks specific to this piece
+  storyboard?: StoryboardBeat[]; // shot-by-shot plan
+  coverText?: string;
+  captionIG?: string;
+  captionTikTok?: string;
   templateId?: string;
 
   createdAt: string;

@@ -36,11 +36,11 @@ const invoices: Invoice[] = [
 
 // ---- Accounts (DEMO follower numbers, editable) ----
 const accounts: PlatformAccount[] = [
-  { platform: "TikTok", followers: 12000, followerDate: addDays(0), engagement: 4.1, views30d: 286000, isDemo: true },
-  { platform: "Instagram", followers: 8900, followerDate: addDays(0), engagement: 3.2, views30d: 154000, isDemo: true },
-  { platform: "Lemon8", followers: 1500, followerDate: addDays(0), engagement: null, views30d: null, isDemo: true },
-  { platform: "Xiaohongshu", followers: 900, followerDate: addDays(0), engagement: null, views30d: null, isDemo: true },
-  { platform: "YouTube Shorts", followers: 1200, followerDate: addDays(0), engagement: 2.4, views30d: 18000, isDemo: true },
+  { platform: "TikTok", followers: 250, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
+  { platform: "Instagram", followers: 7, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
+  { platform: "Lemon8", followers: 0, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
+  { platform: "Xiaohongshu", followers: 0, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
+  { platform: "YouTube Shorts", followers: 0, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
 ];
 
 // ---- Analytics (DEMO sample entries) ----
@@ -97,8 +97,8 @@ const business: BusinessProfile = {
 };
 
 const settings: Settings = {
-  weeklyGoal: 3,
-  followerGoal: 50000,
+  weeklyGoal: 2,
+  followerGoal: 1000,
   timezone: "Asia/Singapore",
   brandDealsEnabled: false,
   aiConnected: false,
