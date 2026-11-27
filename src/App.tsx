@@ -30,13 +30,11 @@ function Shell() {
   const [carried, setCarried] = useState<RateLine[] | null>(null);
   const canSave = storageWorks();
 
+  // Money/Rates/Invoices hidden for now — Shanice does not need them yet; pages kept so data is not lost
   const tabs: { id: TabId; label: string }[] = [
     { id: "today", label: "Today" },
     { id: "ideas", label: "Ideas" },
     { id: "lineup", label: "Lineup" },
-    { id: "money", label: "Money" },
-    { id: "rates", label: "Rates" },
-    { id: "invoices", label: "Invoices" },
     { id: "analytics", label: "Analytics" },
     { id: "suggestions", label: "Suggestions" },
     { id: "templates", label: "Templates" },
