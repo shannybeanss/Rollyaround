@@ -44,10 +44,15 @@ const accounts: PlatformAccount[] = [
   { platform: "YouTube Shorts", followers: 0, followerDate: addDays(0), engagement: null, views30d: null, isDemo: false },
 ];
 
-// ---- Analytics (DEMO sample entries) ----
+// ---- Analytics (real TikTok entries, logged 28 Nov 2026 from TikTok screenshots; likes/saves/shares/follows unknown) ----
+// No automatic TikTok sync in this planner — these are manually logged, not a live link.
 const analytics: AnalyticsEntry[] = [
-  { id: id(), title: "Cheapest omakase in Singapore (DEMO)", platform: "TikTok", series: "I Only Have One Stomach", postedDate: addDays(-21), ageWindow: "7d", views: 180000, likes: 9200, saves: 2100, shares: 410, follows: 320, isDemo: true },
-  { id: id(), title: "3 day Bangkok itinerary (DEMO)", platform: "TikTok", series: "Your Unpaid Tour Guide", postedDate: addDays(-29), ageWindow: "7d", views: 95000, likes: 5100, saves: 1200, shares: 180, follows: 210, isDemo: true },
+  { id: id(), title: "DIHUA STREET Taiwan", platform: "TikTok", series: "Your Unpaid Tour Guide", ageWindow: "7d", views: 10400, likes: null, saves: null, shares: null, follows: null, isDemo: false },
+  { id: id(), title: "Unboxing with me", platform: "TikTok", series: "Standalone", ageWindow: "7d", views: 18800, likes: null, saves: null, shares: null, follows: null, isDemo: false },
+  { id: id(), title: "Where to find a digi camera under $150", platform: "TikTok", series: "Your Unpaid Tour Guide", ageWindow: "7d", views: 3809, likes: null, saves: null, shares: null, follows: null, isDemo: false },
+  { id: id(), title: "Price of an Osmo Pocket", platform: "TikTok", series: "Standalone", ageWindow: "7d", views: 3751, likes: null, saves: null, shares: null, follows: null, isDemo: false },
+  { id: id(), title: "Your next trip to MELBOURNE — 15 places", platform: "TikTok", series: "Your Unpaid Tour Guide", ageWindow: "7d", views: 3376, likes: null, saves: null, shares: null, follows: null, isDemo: false },
+  { id: id(), title: "Where to find WILD KOALAS in Australia", platform: "TikTok", series: "Your Unpaid Tour Guide", ageWindow: "7d", views: 2121, likes: null, saves: null, shares: null, follows: null, isDemo: false },
 ];
 
 // ---- Templates (starter set, not demo — these are real reusable formats) ----
