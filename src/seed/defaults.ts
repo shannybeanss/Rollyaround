@@ -57,7 +57,7 @@ const templates: Template[] = [
   { id: id(), name: "Café & matcha Rolly Rating receipt", series: "I Only Have One Stomach", isStarter: true,
     hook: "Is this worth it?", structure: "Order → first sip → rating receipt overlay", ending: "Receipt-style rating" },
   { id: id(), name: "Unpaid Tour Guide Reel", series: "Your Unpaid Tour Guide", isStarter: true,
-    hook: "Planning X? Save this.", structure: "Day-by-day beats, cost + transport callouts", ending: "Save-this CTA" },
+    hook: "Planning X? Save this.", structure: "Hook → 1.5s series intro → hack/tip → Save-this CTA", ending: "Save-this CTA" },
   { id: id(), name: "Unpaid Tour Guide carousel", series: "Your Unpaid Tour Guide", isStarter: true,
     structure: "Slide-by-slide: cover → stops → costs → tips → save", coverText: "City in X days" },
   { id: id(), name: "Around the World Story", series: "Rolly Around the World", isStarter: true,
@@ -98,7 +98,7 @@ const business: BusinessProfile = {
 };
 
 const settings: Settings = {
-  weeklyGoal: 2,
+  weeklyGoal: 3,
   followerGoal: 1000,
   timezone: "Asia/Singapore",
   brandDealsEnabled: false,
@@ -110,11 +110,34 @@ const settings: Settings = {
 
 // ---- Rolly Around (travel) account data ----
 export function seedAppData(): AppData {
+  const ideas = seedIdeas();
+  const findIdea = (title: string) => {
+    const idea = ideas.find((i) => i.title === title);
+    if (!idea) throw new Error(`seedAppData: missing idea "${title}"`);
+    return idea;
+  };
+  const recap = findIdea("11 destinations in one travel recap");
+  const matcha = findIdea("Tsujiri Premium matcha");
+  const hairwash = findIdea("$8 Vietnam hair wash");
+  // The recap is already stage Edit (set in ideas.ts); bring the next two
+  // into Edit so the weekly timeline makes sense.
+  matcha.stage = "Edit";
+  hairwash.stage = "Edit";
   return {
     version: 1,
     seriesList: [...TRAVEL_SERIES],
-    ideas: seedIdeas(),
-    scheduledTasks: [],
+    todayPlan: { date: "2026-11-28", text: "Finish 11-destinations recap for post tomorrow 29 Nov" },
+    pinnedPriorities: [recap.id, matcha.id, hairwash.id],
+    ideas,
+    scheduledTasks: [
+      // Sun 29 Nov is a weekend exception she chose for the recap post;
+      // the planner flags weekend tasks, that is intentional.
+      { id: id(), ideaId: recap.id, kind: "Post", date: "2026-11-29", done: false },
+      { id: id(), ideaId: matcha.id, kind: "Edit", date: "2026-11-30", done: false },
+      { id: id(), ideaId: matcha.id, kind: "Post", date: "2026-12-01", done: false },
+      { id: id(), ideaId: hairwash.id, kind: "Edit", date: "2026-12-02", done: false },
+      { id: id(), ideaId: hairwash.id, kind: "Post", date: "2026-12-03", done: false },
+    ],
     waiting: [],
     dailyUpdates: [],
     rates: rates.map((r) => ({ ...r, id: id() })),
