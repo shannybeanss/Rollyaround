@@ -101,6 +101,24 @@ describe("Daily update → one finished task + a next action", () => {
   });
 });
 
+describe("Brainstorm from a daily update", () => {
+  it("detects the topic and generates hooks + follow-ups, then dumps to Ideas", async () => {
+    const { brainstorm, dumpBrainstorm, detectTopic } = await import("./lib/brainstorm");
+    const d = fresh();
+    const text = "today I did the burger video and also do some editing clips about it";
+    expect(detectTopic(text)).toContain("burger");
+    const r = brainstorm(text, d);
+    expect(r.hooks.length).toBeGreaterThanOrEqual(5);
+    expect(r.followUps.length).toBeGreaterThanOrEqual(3);
+    const before = d.ideas.length;
+    dumpBrainstorm(d, r, r.hooks.slice(0, 2), [r.followUps[0].title]);
+    // main piece + 1 follow-up = 2 new cards
+    expect(d.ideas.length).toBe(before + 2);
+    const main = d.ideas.find((i) => i.title.toLowerCase().includes("burger") && i.stage === "Edit")!;
+    expect(main.hooks.length).toBe(2);
+  });
+});
+
 describe("Weekly count — cross-post counts once", () => {
   it("a piece live on both platforms this week counts as 1", () => {
     const d = fresh();

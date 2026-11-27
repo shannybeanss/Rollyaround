@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useStore } from "../store";
 import { useToast } from "../components/Toast";
 import { extractChanges, type ProposedChange } from "../lib/extract";
+import { brainstorm, dumpBrainstorm, type BrainstormResult } from "../lib/brainstorm";
 import { uid } from "../lib/helpers";
 import type { AppData } from "../types";
 
@@ -26,6 +27,7 @@ export function DailyUpdate() {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [proposed, setProposed] = useState<ProposedChange[] | null>(null);
+  const [ideasResult, setIdeasResult] = useState<BrainstormResult | null>(null);
   const [listening, setListening] = useState(false);
   const recRef = useRef<SpeechRec | null>(null);
   const speechSupported = !!getSpeech();
@@ -33,6 +35,11 @@ export function DailyUpdate() {
   const analyze = () => {
     const changes = extractChanges(text, data);
     setProposed(changes);
+  };
+
+  const doBrainstorm = () => {
+    if (!text.trim()) return;
+    setIdeasResult(brainstorm(text, data));
   };
 
   const toggleListen = async () => {
@@ -118,10 +125,20 @@ export function DailyUpdate() {
             <button className={`btn ${listening ? "btn-accent listening" : ""}`} onClick={toggleListen} title={speechSupported ? "" : "Not supported in this browser"}>
               {listening ? "🔴 Listening… tap to stop" : "🎤 Speak"}
             </button>
+            <button className="btn btn-accent" onClick={doBrainstorm} disabled={!text.trim()}>💡 Brainstorm hooks & ideas</button>
             <button className="btn btn-primary" onClick={analyze} disabled={!text.trim()}>Review changes</button>
-            <button className="btn btn-ghost" onClick={() => { setOpen(false); setText(""); setProposed(null); }}>Cancel</button>
+            <button className="btn btn-ghost" onClick={() => { setOpen(false); setText(""); setProposed(null); setIdeasResult(null); }}>Cancel</button>
           </div>
           {!speechSupported && <span className="tiny muted">🎤 Speech-to-text isn't available in this browser (common on iPhone/Safari). Type or paste your update — it works exactly the same.</span>}
+
+          {ideasResult && (
+            <BrainstormPanel result={ideasResult} onClose={() => setIdeasResult(null)} onDump={(hooks, fus) => {
+              const before: AppData = structuredClone(data);
+              update((d) => { dumpBrainstorm(d, ideasResult, hooks, fus); return d; });
+              setIdeasResult(null); setText("");
+              show(`Dumped to Ideas — 1 piece + ${fus.length} follow-up${fus.length === 1 ? "" : "s"}`, () => { update(() => before); show("Reverted"); });
+            }} />
+          )}
 
           {proposed && (
             <div className="card card-pad" style={{ background: "var(--surface-2)" }}>
@@ -165,6 +182,52 @@ function DiffList({ changes, onSave }: { changes: ProposedChange[]; onSave: (c: 
           <button className="btn btn-accent" disabled={approved.length === 0} onClick={() => onSave(approved)}>Save {approved.length} change{approved.length === 1 ? "" : "s"}</button>
         </div>
       )}
+    </div>
+  );
+}
+
+// Brainstorm panel: pick which generated hooks + follow-up ideas to dump into Ideas.
+function BrainstormPanel({ result, onClose, onDump }: { result: BrainstormResult; onClose: () => void; onDump: (hooks: string[], followUps: string[]) => void }) {
+  const [hooks, setHooks] = useState<Record<string, boolean>>(Object.fromEntries(result.hooks.map((h) => [h, true])));
+  const [fus, setFus] = useState<Record<string, boolean>>(Object.fromEntries(result.followUps.map((f) => [f.title, true])));
+  const selHooks = result.hooks.filter((h) => hooks[h]);
+  const selFus = result.followUps.filter((f) => fus[f.title]).map((f) => f.title);
+
+  return (
+    <div className="card card-pad" style={{ background: "var(--surface-2)" }}>
+      <div className="row between wrap">
+        <h4>💡 Ideas for “{result.topic}” <span className="tiny muted">(rule-based · series: {result.series})</span></h4>
+      </div>
+      <p className="tiny muted" style={{ marginTop: 2 }}>Pick what to keep. It saves your video as a piece (with the selected hooks) and drops the follow-ups into your idea bank.</p>
+
+      <div style={{ marginTop: 12 }}>
+        <b className="tiny" style={{ textTransform: "uppercase", letterSpacing: ".04em", color: "var(--ink-soft)" }}>Hook options</b>
+        <div className="stack gap-6" style={{ marginTop: 6 }}>
+          {result.hooks.map((h) => (
+            <label key={h} className="row gap-8" style={{ margin: 0, alignItems: "flex-start" }}>
+              <input type="checkbox" style={{ width: 16, height: 16, marginTop: 3 }} checked={!!hooks[h]} onChange={() => setHooks((p) => ({ ...p, [h]: !p[h] }))} />
+              <span>{h}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <b className="tiny" style={{ textTransform: "uppercase", letterSpacing: ".04em", color: "var(--ink-soft)" }}>Follow-up video ideas</b>
+        <div className="stack gap-6" style={{ marginTop: 6 }}>
+          {result.followUps.map((f) => (
+            <label key={f.title} className="row gap-8" style={{ margin: 0, alignItems: "flex-start" }}>
+              <input type="checkbox" style={{ width: 16, height: 16, marginTop: 3 }} checked={!!fus[f.title]} onChange={() => setFus((p) => ({ ...p, [f.title]: !p[f.title] }))} />
+              <span><b>{f.title}</b> <span className="tiny muted">— {f.note}</span></span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="row between" style={{ marginTop: 14 }}>
+        <button className="btn btn-ghost" onClick={onClose}>Discard</button>
+        <button className="btn btn-accent" onClick={() => onDump(selHooks, selFus)}>Dump {selHooks.length} hook{selHooks.length === 1 ? "" : "s"} + {selFus.length} idea{selFus.length === 1 ? "" : "s"} → Ideas</button>
+      </div>
     </div>
   );
 }
