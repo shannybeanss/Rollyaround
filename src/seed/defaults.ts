@@ -124,20 +124,19 @@ export function seedAppData(): AppData {
   const recap = findIdea("11 destinations in one travel recap");
   const matcha = findIdea("Tsujiri Premium matcha");
   const hairwash = findIdea("$8 Vietnam hair wash");
-  // The recap is already stage Edit (set in ideas.ts); bring the next two
+  // The recap is already stage Ready (set in ideas.ts); bring the next two
   // into Edit so the weekly timeline makes sense.
   matcha.stage = "Edit";
   hairwash.stage = "Edit";
   return {
     version: 1,
     seriesList: [...TRAVEL_SERIES],
-    todayPlan: { date: "2026-11-28", text: "Finish 11-destinations recap for post tomorrow 29 Nov" },
+    todayPlan: { date: "2026-11-28", text: "Post 11-destinations recap tonight 28 Nov" },
     pinnedPriorities: [recap.id, matcha.id, hairwash.id],
     ideas,
     scheduledTasks: [
-      // Sun 29 Nov is a weekend exception she chose for the recap post;
-      // the planner flags weekend tasks, that is intentional.
-      { id: id(), ideaId: recap.id, kind: "Post", date: "2026-11-29", done: false },
+      // Posted Sat 28 Nov, a day early; originally scheduled Sun 29 Nov.
+      { id: id(), ideaId: recap.id, kind: "Post", date: "2026-11-28", done: true },
       { id: id(), ideaId: matcha.id, kind: "Edit", date: "2026-11-30", done: false },
       { id: id(), ideaId: matcha.id, kind: "Post", date: "2026-12-01", done: false },
       { id: id(), ideaId: hairwash.id, kind: "Edit", date: "2026-12-02", done: false },
